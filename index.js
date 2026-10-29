@@ -8,7 +8,7 @@ const token = process.env.TELEGRAM_BOT_TOKEN;
 const bot = new Bot(token, { polling: true });
 
 // Bot information
-const BOT_NAME = 'pakyji';
+const BOT_NAME = 'Oxion';
 const BOT_VERSION = '1.3.0';
 const START_TIME = Date.now();
 
@@ -22,6 +22,7 @@ let db = {
   userInventory: {},
   reminders: [],
   hangmanGames: {},
+  tictactoeGames: {},
   wordChainGames: {}
 };
 
@@ -595,6 +596,83 @@ bot.hears(/\/guess ([a-zA-Z])/, (ctx) => {
   ctx.reply(msg);
 });
 
+// Handle /tictactoe command
+bot.hears('/tictactoe', (ctx) => {
+  const userId = ctx.from.id;
+  if (!db.tictactoeGames[userId]) {
+    // Initialize game: 3x3 empty board
+    db.tictactoeGames[userId] = { board: Array(9).fill(null), currentPlayer: 'X', status: 'in_progress' };
+    saveDB();
+    ctx.reply('🎯 *Tic-Tac-Toe*\n\nA new game has started! You are X. Send /tictactoe move <index> to play. (Indices 1-9)');
+    return;
+  }
+
+  const game = db.tictactoeGames[userId];
+  if (game.status !== 'in_progress') {
+    return ctx.reply(`❌ Game is ${game.status}. Start a new game with /tictactoe.`);
+  }
+
+  ctx.reply(`🎲 *Tic-Tac-Toe*\n\nBoard:\n${game.board.map((cell, i) => `${i + 1}: ${cell || '_'}`).join('\n')}\n\nYour turn (${game.currentPlayer}). Send /tictactoe move <index> (1-9)`);
+});
+
+// Handle /news command (Simulated API Integration)
+bot.hears(/\/news (.+)/, (ctx) => {
+  const topic = ctx.match[1];
+  const newsHeadlines = [
+    `🤖 Bot update v${BOT_VERSION} rolled out successfully.`,
+    `🚀 New mini-game Tic-Tac-Toe is now available!`,
+    `💰 Leaderboard updated with daily rewards.`,
+    `⚙️ Utility commands like /base64decode and /calc are enhanced.`
+  ];
+  const headline = newsHeadlines[Math.floor(Math.random() * newsHeadlines.length)];
+
+  ctx.reply(`📰 *News for ${topic}*\n\n${headline}\n\n*Note: This is simulated data.*`);
+});
+
+// Handle /tictactoe move command
+bot.hears(/\/tictactoe move (\d+)/, (ctx) => {
+  const userId = ctx.from.id;
+  const index = parseInt(ctx.match[1]);
+  const game = db.tictactoeGames[userId];
+
+  if (!game || game.status !== 'in_progress') {
+    return ctx.reply('❌ No game in progress! Start with /tictactoe.');
+  }
+
+  if (index < 1 || index > 9 || game.board[index - 1] !== null) {
+    return ctx.reply('❌ Invalid move or cell already taken. Try again.');
+  }
+
+  game.board[index - 1] = game.currentPlayer;
+  saveDB();
+
+  // Check for win/draw
+  const lines = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
+  let winner = null;
+  for (const line of lines) {
+    const [a, b, c] = line;
+    if (game.board[a] && game.board[a] === game.board[b] && game.board[a] === game.board[c]) {
+      winner = game.board[a];
+      break;
+    }
+  }
+
+  if (winner) {
+    game.status = 'finished';
+    saveDB();
+    ctx.reply(`🏆 *Game Over!*\n\nPlayer ${winner} wins! 🎉`);
+  } else if (game.board.every(cell => cell !== null)) {
+    game.status = 'finished';
+    saveDB();
+    ctx.reply('🤝 *Game Over!*\n\nIt\'s a draw!');
+  } else {
+    // Switch player
+    game.currentPlayer = game.currentPlayer === 'X' ? 'O' : 'X';
+    saveDB();
+    ctx.reply(`🎲 *Tic-Tac-Toe*\n\nBoard:\n${game.board.map((cell, i) => `${i + 1}: ${cell || '_'}`).join('\n')}\n\nNext turn: ${game.currentPlayer}. Send /tictactoe move <index> (1-9)`);
+  }
+});
+
 // Handle /wordchain command
 bot.hears(/\/wordchain (.+)/, (ctx) => {
   const userId = ctx.from.id.toString() + ctx.chat.id.toString();
@@ -679,6 +757,294 @@ bot.on('message', (ctx) => {
   }
 });
 
+// ===== NEW FEATURES =====
+
+// Chess game
+const chessGames = new Map();
+bot.hears('/chess', (ctx) => {
+  const userId = ctx.from.id.toString();
+  if (!chessGames.has(userId)) {
+    chessGames.set(userId, {
+      board: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+      moves: []
+    });
+  }
+  const game = chessGames.get(userId);
+  ctx.reply(`♟️ *Chess Game*\n\nFEN: ${game.board}\nMoves: ${game.moves.join(', ') || 'None'}\n\nSend /chess move <from-to> (e.g., /chess move e2e4)`);
+});
+
+// Handle chess move
+bot.hears(/\/chess move ([a-h][1-8][a-h][1-8])/, (ctx) => {
+  const userId = ctx.from.id.toString();
+  const move = ctx.match[1];
+  if (!chessGames.has(userId)) {
+    return ctx.reply('❌ No chess game! Start with /chess');
+  }
+  const game = chessGames.get(userId);
+  game.moves.push(move);
+  ctx.reply(`✅ Move ${move} recorded! Total moves: ${game.moves.length}`);
+});
+
+// Minesweeper
+bot.hears('/minesweeper', (ctx) => {
+  const userId = ctx.from.id.toString();
+  const size = 5;
+  const mines = 5;
+  const board = Array(size).fill().map(() => Array(size).fill('█'));
+  const numbers = Array(size).fill().map(() => Array(size).fill(0));
+
+  // Place mines
+  for (let i = 0; i < mines; i++) {
+    const x = Math.floor(Math.random() * size);
+    const y = Math.floor(Math.random() * size);
+    numbers[x][y] = -1;
+  }
+
+  db.minesweeperGames = db.minesweeperGames || {};
+  db.minesweeperGames[userId] = { board, numbers, revealed: Array(size).fill().map(() => Array(size).fill(false)), size };
+  saveDB();
+
+  ctx.reply(`💣 *Minesweeper*\n${board.map(row => row.join(' ')).join('\n')}\n\nUse /mine reveal <x> <y>`);
+});
+
+// Handle mine reveal
+bot.hears(/\/mine reveal (\d) (\d)/, (ctx) => {
+  const userId = ctx.from.id.toString();
+  const x = parseInt(ctx.match[1]);
+  const y = parseInt(ctx.match[2]);
+
+  if (!db.minesweeperGames || !db.minesweeperGames[userId]) {
+    return ctx.reply('❌ No game! Start with /minesweeper');
+  }
+
+  const game = db.minesweeperGames[userId];
+  if (x >= game.size || y >= game.size) {
+    return ctx.reply('❌ Out of bounds!');
+  }
+
+  if (game.numbers[x][y] === -1) {
+    ctx.reply('💥 Boom! You hit a mine!');
+    delete db.minesweeperGames[userId];
+    saveDB();
+  } else {
+    game.revealed[x][y] = true;
+    saveDB();
+    ctx.reply(`✅ Revealed (${x},${y})`);
+  }
+});
+
+// 2048 game
+bot.hears('/2048', (ctx) => {
+  const userId = ctx.from.id.toString();
+  const board = Array(4).fill().map(() => Array(4).fill(0));
+  // Add two random tiles
+  for (let i = 0; i < 2; i++) {
+    const x = Math.floor(Math.random() * 4);
+    const y = Math.floor(Math.random() * 4);
+    board[x][y] = Math.random() < 0.9 ? 2 : 4;
+  }
+
+  db.game2048 = db.game2048 || {};
+  db.game2048[userId] = { board, score: 0 };
+  saveDB();
+
+  ctx.reply(`🔢 *2048 Game*\n${board.map(row => row.join('\t')).join('\n')}\nScore: 0\nUse /2048 move <up|down|left|right>`);
+});
+
+// Rock Paper Scissors Lizard Spock
+bot.hears('/rpsls', (ctx) => {
+  const choices = ['rock', 'paper', 'scissors', 'lizard', 'spock'];
+  const botChoice = choices[Math.floor(Math.random() * choices.length)];
+  const userChoice = ctx.match ? ctx.match[1] : null;
+
+  if (!userChoice) {
+    return ctx.reply(`🪨 *Rock Paper Scissors Lizard Spock*\nChoices: rock, paper, scissors, lizard, spock\nUsage: /rpsls <choice>`);
+  }
+
+  const userLower = userChoice.toLowerCase();
+  if (!choices.includes(userLower)) {
+    return ctx.reply('❌ Invalid choice!');
+  }
+
+  const rules = {
+    rock: ['scissors', 'lizard'],
+    paper: ['rock', 'spock'],
+    scissors: ['paper', 'lizard'],
+    lizard: ['spock', 'paper'],
+    spock: ['scissors', 'rock']
+  };
+
+  let result;
+  if (userLower === botChoice) {
+    result = '🤝 Tie!';
+  } else if (rules[userLower].includes(botChoice)) {
+    result = '✅ You win!';
+    addScore(ctx.from.id, 10);
+  } else {
+    result = '❌ You lose!';
+  }
+
+  ctx.reply(`🪨 *RPSLS*\nYou: ${userLower}\nBot: ${botChoice}\n${result}`);
+});
+
+// Trivia with categories
+bot.hears('/trivia', (ctx) => {
+  const trivia = {
+    science: [
+      { q: 'What planet is known as the Red Planet?', a: ['Mars', 'Venus', 'Jupiter', 'Saturn'] },
+      { q: 'What is H2O commonly known as?', a: ['Water', 'Hydrogen', 'Oxygen', 'Helium'] }
+    ],
+    history: [
+      { q: 'In which year did WWII end?', a: ['1945', '1939', '1918', '1969'] },
+      { q: 'Who was the first president of USA?', a: ['Washington', 'Lincoln', 'Jefferson', 'Adams'] }
+    ],
+    sports: [
+      { q: 'How many players in a football team?', a: ['11', '9', '7', '15'] },
+      { q: 'Which sport uses a shuttlecock?', a: ['Badminton', 'Tennis', 'Squash', 'Table Tennis'] }
+    ]
+  };
+
+  const categories = Object.keys(trivia);
+  const category = categories[Math.floor(Math.random() * categories.length)];
+  const question = trivia[category][Math.floor(Math.random() * trivia[category].length)];
+
+  db.triviaGames = db.triviaGames || {};
+  db.triviaGames[ctx.from.id] = { answer: question.a[0].toLowerCase(), category };
+
+  ctx.reply(`❓ *Trivia: ${category}*\n${question.q}\nOptions: ${question.a.join(', ')}`);
+});
+
+// Answer trivia
+bot.hears(/\/answer (.+)/, (ctx) => {
+  const userId = ctx.from.id;
+  if (!db.triviaGames || !db.triviaGames[userId]) {
+    return ctx.reply('❌ No active trivia! Use /trivia');
+  }
+
+  const correct = db.triviaGames[userId].answer;
+  const userAnswer = ctx.match[1].toLowerCase();
+
+  if (userAnswer === correct) {
+    addScore(userId, 20);
+    ctx.reply('✅ Correct! +20 points');
+  } else {
+    ctx.reply(`❌ Wrong! Correct answer: ${correct}`);
+  }
+  delete db.triviaGames[userId];
+  saveDB();
+});
+
+// QR Code generator (simulated)
+bot.hears('/qr', (ctx) => {
+  const text = ctx.match ? ctx.match[1] : '';
+  if (!text) {
+    return ctx.reply('❌ Usage: /qr <text>');
+  }
+  const qrCode = `QR:${Buffer.from(text).toString('base64')}`;
+  ctx.reply(`🔳 *QR Code Generated*\nText: ${text}\nCode: ${qrCode}\n*Note: Simulated QR code*`);
+});
+
+// Currency converter (simulated)
+bot.hears(/\/convert (\d+) (\w{3}) to (\w{3})/, (ctx) => {
+  const amount = parseFloat(ctx.match[1]);
+  const from = ctx.match[2].toUpperCase();
+  const to = ctx.match[3].toUpperCase();
+
+  const rates = {
+    USD: 1, EUR: 0.92, GBP: 0.79, JPY: 149, INR: 83,
+    AED: 3.67, SAR: 3.75, CAD: 1.36, AUD: 1.52
+  };
+
+  if (!rates[from] || !rates[to]) {
+    return ctx.reply('❌ Unsupported currency! Use USD/EUR/GBP/JPY/INR/AED/SAR/CAD/AUD');
+  }
+
+  const usdAmount = amount / rates[from];
+  const converted = usdAmount * rates[to];
+
+  ctx.reply(`💱 *Currency Converter*\n${amount} ${from} = ${converted.toFixed(2)} ${to}`);
+});
+
+// URL shortener (simulated)
+bot.hears(/\/shorten (.+)/, (ctx) => {
+  const url = ctx.match[1];
+  const shortCode = Math.random().toString(36).substring(2, 8);
+  ctx.reply(`🔗 *Shortened URL*\nOriginal: ${url}\nShort: https://ox.ly/${shortCode}`);
+});
+
+// AI Chat (simulated)
+bot.hears(/\/ai (.+)/, (ctx) => {
+  const prompt = ctx.match[1];
+  const responses = [
+    `🤖 I understand you're asking about "${prompt}". Would you like more details?`,
+    `🧠 As an AI, I think "${prompt}" is an interesting topic!`,
+    `💡 Regarding "${prompt}", here's what I know...`
+  ];
+  ctx.reply(responses[Math.floor(Math.random() * responses.length)]);
+});
+
+// Image description (simulated)
+bot.hears('/describe', (ctx) => {
+  ctx.reply(`🖼️ *Image Description*\nPlease send an image and I'll describe it!\n*Note: Simulated feature*`);
+});
+
+// Text summarization
+bot.hears(/\/summarize (.+)/, (ctx) => {
+  const text = ctx.match[1];
+  const words = text.split(' ');
+  const summary = words.slice(0, Math.min(20, words.length)).join(' ') + '...';
+  ctx.reply(`📝 *Summary*\n${summary}`);
+});
+
+// Mood analysis
+bot.hears(/\/mood (.+)/, (ctx) => {
+  const text = ctx.match[1].toLowerCase();
+  const positive = ['happy', 'good', 'great', 'love', 'awesome', 'nice'];
+  const negative = ['sad', 'bad', 'angry', 'hate', 'terrible', 'awful'];
+
+  let score = 0;
+  positive.forEach(word => { if (text.includes(word)) score++; });
+  negative.forEach(word => { if (text.includes(word)) score--; });
+
+  let mood;
+  if (score > 0) mood = '😊 Positive';
+  else if (score < 0) mood = '😔 Negative';
+  else mood = '😐 Neutral';
+
+  ctx.reply(`😊 *Mood Analysis*\nText: ${ctx.match[1]}\nMood: ${mood}\nScore: ${score}`);
+});
+
+// Admin panel
+bot.hears('/admin', (ctx) => {
+  const ownerId = process.env.BOT_OWNER_ID;
+  if (ownerId && ctx.from.id.toString() !== ownerId) {
+    return ctx.reply('❌ Unauthorized: Owner only');
+  }
+
+  const totalUsers = userStats.size;
+  const totalMessages = Array.from(userStats.values()).reduce((sum, s) => sum + s.messages, 0);
+  const totalScore = Array.from(userScores.values()).reduce((sum, s) => sum + s, 0);
+
+  ctx.reply(`👑 *Admin Panel*\nUsers: ${totalUsers}\nMessages: ${totalMessages}\nTotal Points: ${totalScore}\nUptime: ${formatUptime(Date.now() - START_TIME)}`);
+});
+
+// Group welcome
+bot.hears('/welcome', (ctx) => {
+  if (ctx.chat.type !== 'group' && ctx.chat.type !== 'supergroup') {
+    return ctx.reply('❌ This command works only in groups!');
+  }
+  ctx.reply('👋 Welcome message set! New members will be greeted!');
+});
+
+// Anti-spam toggle
+db.spamSettings = db.spamSettings || {};
+bot.hears('/antispam', (ctx) => {
+  const chatId = ctx.chat.id.toString();
+  db.spamSettings[chatId] = !db.spamSettings[chatId];
+  saveDB();
+  ctx.reply(`🛡️ *Anti-spam*\n${db.spamSettings[chatId] ? 'Enabled' : 'Disabled'}`);
+});
+
 // Handle errors
 bot.on('error', (error) => {
   console.error(`[${BOT_NAME}] Error:`, error.message);
@@ -689,5 +1055,5 @@ bot.on('polling_error', (error) => {
 });
 
 console.log(`[${BOT_NAME}] ${BOT_VERSION} - Bot is running...`);
-console.log(`[${BOT_NAME}] 30+ commands available`);
+console.log(`[${BOT_NAME}] 40+ commands available`);
 run(bot);

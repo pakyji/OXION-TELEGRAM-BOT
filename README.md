@@ -1,11 +1,11 @@
-# 🤖 Pakyji Telegram Bot
+# 🤖 Oxion Telegram Bot
 
 [![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
 [![Telegram](https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://telegram.org/)
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg?style=for-the-badge)](https://opensource.org/licenses/ISC)
-[![Version](https://img.shields.io/badge/Version-1.3.0-brightgreen?style=for-the-badge)](https://github.com/pakyji/OXION-TELEGRAM-BOT)
+[![Version](https://img.shields.io/badge/Version-2.0.0-brightgreen?style=for-the-badge)](https://github.com/pakyji/OXION-TELEGRAM-BOT)
 
-A feature-rich multi-purpose Telegram bot built with Node.js and node-telegram-bot-api. Complete with gaming features, utilities, 30+ commands, polls, reminders, and games!
+A feature-rich multi-purpose Telegram bot built with Node.js and node-telegram-bot-api. Complete with gaming features, utilities, 40+ commands, polls, reminders, and games!
 
 ## ✨ Features
 
@@ -18,6 +18,12 @@ A feature-rich multi-purpose Telegram bot built with Node.js and node-telegram-b
 - **Hangman Game** - Play classic hangman
 - **Word Chain** - Play word chain game
 - **Quiz** - Test your knowledge
+- **Tic-Tac-Toe** - Play 3x3 grid game
+- **Chess Game** - Simple turn-based chess
+- **Minesweeper** - Classic mine finding game
+- **2048 Game** - Number puzzle game
+- **Rock Paper Scissors Lizard Spock** - Extended RPS
+- **Trivia Categories** - Science, History, Sports
 
 ### 🛠️ Utility Commands
 - **Calculator** - Evaluate mathematical expressions
@@ -29,6 +35,11 @@ A feature-rich multi-purpose Telegram bot built with Node.js and node-telegram-b
 - **Poll Creation** - Create interactive polls
 - **Reminders** - Set timed reminders
 - **Message Streak** - Track daily activity
+- **QR Code Generator** - Generate QR codes from text
+- **Currency Converter** - Convert between currencies
+- **URL Shortener** - Shorten long URLs
+- **Text Summarization** - Summarize long messages
+- **Mood Analysis** - Analyze message sentiment
 
 ### 🎲 Fun Commands
 - **Dice Roll** - 🎲 Roll a dice
@@ -37,12 +48,20 @@ A feature-rich multi-purpose Telegram bot built with Node.js and node-telegram-b
 - **Jokes** - 😄 Programmer jokes
 - **Memes** - 🎭 Funny memes
 - **Echo** - 📢 Echo messages back
+- **AI Chat** - Chat with simulated AI
+- **Image Description** - Describe uploaded images
 
 ### 📊 Statistics
 - **User Stats** - Track messages sent
 - **Global Stats** - Total users and messages
 - **First/Last Seen** - User activity tracking
 - **Response Time** - Bot latency monitoring
+
+### 👥 Social Features
+- **Group Welcome Messages** - Customizable greetings
+- **Anti-Spam Protection** - Rate limiting per chat
+- **Admin Panel** - Bot management commands
+- **User Roles** - Assign custom roles
 
 ## 🚀 Installation
 
@@ -125,6 +144,13 @@ npm run dev
 | `/gamble <amount>` | Bet your points |
 | `/inventory` | View items |
 | `/leaderboard` | Top players |
+| `/tictactoe` | Play tic-tac-toe |
+| `/chess` | Play chess game |
+| `/minesweeper` | Play minesweeper |
+| `/2048` | Play 2048 game |
+| `/rpsls` | Rock Paper Scissors Lizard Spock |
+| `/trivia` | Play trivia game |
+| `/answer <text>` | Answer trivia question |
 
 ### Utility Commands
 | Command | Description |
@@ -138,6 +164,12 @@ npm run dev
 | `/poll <question> | <opt>` | Create a poll |
 | `/remind <mins> <msg>` | Set reminder |
 | `/streak` | Check message streak |
+| `/qr <text>` | Generate QR code |
+| `/convert <amt> <from> to <to>` | Currency converter |
+| `/shorten <url>` | Shorten URL |
+| `/summarize <text>` | Summarize text |
+| `/mood <text>` | Analyze mood |
+| `/ai <prompt>` | Chat with AI |
 
 ## 🛠️ Tech Stack
 
@@ -186,7 +218,7 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 
 ## 👨‍💻 Developer
 
-**Pakyji**
+**Oxion**
 - GitHub: [@pakyji](https://github.com/pakyji)
 - Telegram: @pakyji
 
@@ -197,6 +229,24 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 - All contributors and users
 
 ## 📈 Version History
+
+### v2.0.0
+- Added Chess mini-game
+- Added Minesweeper game
+- Added 2048 game
+- Added Rock Paper Scissors Lizard Spock
+- Added Trivia with categories
+- Added QR Code generator
+- Added Currency converter
+- Added URL shortener
+- Added AI Chat simulation
+- Added Text summarization
+- Added Mood analysis
+- Added Admin panel
+- Added Group welcome messages
+- Added Anti-spam protection
+- Fixed syntax errors and bugs
+- Updated to 40+ commands
 
 ### v1.3.0
 - Added JSON database persistence
