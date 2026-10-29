@@ -1,19 +1,51 @@
 require('dotenv').config();
 const { Bot } = require('node-telegram-bot-api');
 const { run } = require('node-telegram-bot-api/node');
+const fs = require('fs');
+const path = require('path');
 
 const token = process.env.TELEGRAM_BOT_TOKEN;
 const bot = new Bot(token, { polling: true });
 
 // Bot information
 const BOT_NAME = 'pakyji';
-const BOT_VERSION = '1.2.0';
+const BOT_VERSION = '1.3.0';
 const START_TIME = Date.now();
 
-// User data storage (in-memory, resets on restart)
-const userStats = new Map();
-const userScores = new Map();
-const userInventory = new Map();
+// Database file
+const DB_FILE = path.join(__dirname, 'bot_data.json');
+
+// Load database
+let db = {
+  userStats: {},
+  userScores: {},
+  userInventory: {},
+  reminders: [],
+  hangmanGames: {},
+  wordChainGames: {}
+};
+
+if (fs.existsSync(DB_FILE)) {
+  try {
+    db = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+  } catch (e) {
+    console.log('Could not load database, starting fresh');
+  }
+}
+
+// Save database
+const saveDB = () => {
+  try {
+    fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
+  } catch (e) {
+    console.error('Could not save database:', e.message);
+  }
+};
+
+// User data storage with persistence
+const userStats = new Map(Object.entries(db.userStats));
+const userScores = new Map(Object.entries(db.userScores));
+const userInventory = new Map(Object.entries(db.userInventory));
 
 // Bot configuration
 const CONFIG = {
@@ -42,7 +74,9 @@ const addScore = (userId, points) => {
   if (!userScores.has(userId)) {
     userScores.set(userId, 0);
   }
-  userScores.set(userId, userScores.get(userId) + points);
+  userScores.set(userId, parseInt(userScores.get(userId)) + points);
+  db.userScores[userId] = userScores.get(userId);
+  saveDB();
   return userScores.get(userId);
 };
 
@@ -56,6 +90,8 @@ const addItem = (userId, item) => {
   }
   const inv = userInventory.get(userId);
   inv.push({ item, timestamp: Date.now() });
+  db.userInventory[userId] = inv;
+  saveDB();
   return inv;
 };
 
@@ -75,6 +111,8 @@ const getUserStats = (userId) => {
   const stats = userStats.get(userId);
   stats.lastSeen = Date.now();
   stats.messages++;
+  db.userStats[userId] = stats;
+  saveDB();
   return stats;
 };
 
@@ -109,7 +147,10 @@ bot.hears('/help', (ctx) => {
     `/coin - Flip a coin 🪙\n` +
     `/quote - Random inspirational quote\n` +
     `/joke - Random joke 😄\n` +
-    `/meme - Get a meme\n\n` +
+    `/meme - Get a meme\n` +
+    `/hangman - Play hangman game\n` +
+    `/wordchain <word> - Play word chain game\n` +
+    `/quiz - Take a quiz\n\n` +
     `*Gaming Commands:*\n` +
     `/score - Check your score\n` +
     `/daily - Claim daily reward\n` +
@@ -122,7 +163,10 @@ bot.hears('/help', (ctx) => {
     `/urlencode <text> - URL encode\n` +
     `/urldecode <text> - URL decode\n` +
     `/base64encode <text> - Base64 encode\n` +
-    `/base64decode <text> - Base64 decode\n\n` +
+    `/base64decode <text> - Base64 decode\n` +
+    `/poll <question> | <opt1> | <opt2> - Create poll\n` +
+    `/remind <mins> <msg> - Set reminder\n` +
+    `/streak - Check message streak\n\n` +
     `*Admin Commands:*\n` +
     `/broadcast <msg> - Broadcast to all users (owner only)`);
 });
@@ -449,6 +493,166 @@ bot.hears(/\/broadcast (.+)/, (ctx) => {
   ctx.reply(`✅ Broadcast sent to ${count} users`);
 });
 
+// NEW FEATURES
+
+// Handle /poll command
+bot.hears(/\/poll (.+)/, (ctx) => {
+  const input = ctx.match[1];
+  const parts = input.split('|').map(p => p.trim());
+  if (parts.length < 3) {
+    return ctx.reply('❌ Usage: /poll Question | Option1 | Option2 | Option3...');
+  }
+  const question = parts[0];
+  const options = parts.slice(1).slice(0, 10);
+  if (options.length < 2) {
+    return ctx.reply('❌ Need at least 2 options!');
+  }
+  bot.createPoll(question, options).then(() => {
+    ctx.reply('✅ Poll created successfully!');
+  }).catch(e => {
+    ctx.reply('❌ Failed to create poll');
+  });
+});
+
+// Handle /remind command
+bot.hears(/\/remind (\d+) (.+)/, (ctx) => {
+  const minutes = parseInt(ctx.match[1]);
+  const message = ctx.match[2];
+  const userId = ctx.from.id;
+  const remindTime = Date.now() + (minutes * 60 * 1000);
+
+  const reminder = {
+    userId,
+    message,
+    time: remindTime,
+    chatId: ctx.chat.id
+  };
+
+  if (!db.reminders) db.reminders = [];
+  db.reminders.push(reminder);
+  saveDB();
+
+  setTimeout(() => {
+    bot.sendMessage(userId, `⏰ *Reminder*\n\n${message}`).catch(() => {});
+    db.reminders = db.reminders.filter(r => r !== reminder);
+    saveDB();
+  }, minutes * 60 * 1000);
+
+  ctx.reply(`✅ Reminder set for ${minutes} minutes from now`);
+});
+
+// Handle /hangman command
+bot.hears('/hangman', (ctx) => {
+  const words = ['javascript', 'telegram', 'bot', 'programming', 'computer', 'developer', 'pakyji'];
+  const word = words[Math.floor(Math.random() * words.length)];
+  const userId = ctx.from.id;
+
+  db.hangmanGames[userId] = {
+    word,
+    guessed: [],
+    wrong: 0,
+    maxWrong: 6
+  };
+  saveDB();
+
+  const display = word.split('').map(l => db.hangmanGames[userId].guessed.includes(l) ? l : '_').join(' ');
+  ctx.reply(`🎯 *Hangman Game*\n\nWord: ${display}\nWrong guesses: ${db.hangmanGames[userId].wrong}/6\n\nGuess a letter! Send /guess <letter>`);
+});
+
+// Handle /guess command
+bot.hears(/\/guess ([a-zA-Z])/, (ctx) => {
+  const userId = ctx.from.id;
+  const letter = ctx.match[1].toLowerCase();
+  const game = db.hangmanGames[userId];
+
+  if (!game) {
+    return ctx.reply('❌ No game in progress! Use /hangman to start.');
+  }
+
+  if (game.guessed.includes(letter)) {
+    return ctx.reply('❌ Already guessed that letter!');
+  }
+
+  game.guessed.push(letter);
+  if (!game.word.includes(letter)) {
+    game.wrong++;
+  }
+  saveDB();
+
+  const display = game.word.split('').map(l => game.guessed.includes(l) ? l : '_').join(' ');
+  let msg = `🎯 *Hangman*\n\nWord: ${display}\nWrong: ${game.wrong}/6\nGuessed: ${game.guessed.join(', ')}`;
+
+  if (game.wrong >= game.maxWrong) {
+    msg += `\n\n❌ Game Over! Word was: ${game.word}`;
+    delete db.hangmanGames[userId];
+    saveDB();
+  } else if (!display.includes('_')) {
+    msg += `\n\n✅ You won! Word was: ${game.word}`;
+    delete db.hangmanGames[userId];
+    saveDB();
+  }
+
+  ctx.reply(msg);
+});
+
+// Handle /wordchain command
+bot.hears(/\/wordchain (.+)/, (ctx) => {
+  const userId = ctx.from.id.toString() + ctx.chat.id.toString();
+  const word = ctx.match[1].toLowerCase();
+
+  if (!db.wordChainGames[userId]) {
+    db.wordChainGames[userId] = {
+      lastWord: null,
+      lastChar: null,
+      count: 0
+    };
+  }
+
+  const game = db.wordChainGames[userId];
+
+  if (game.lastWord && !word.startsWith(game.lastChar)) {
+    return ctx.reply(`❌ Word must start with '${game.lastChar}'! Last word was: ${game.lastWord}`);
+  }
+
+  game.lastWord = word;
+  game.lastChar = word[word.length - 1];
+  game.count++;
+  saveDB();
+
+  ctx.reply(`✅ Good! Next word must start with '${game.lastChar}'\nChain length: ${game.count}`);
+});
+
+// Handle /quiz command
+bot.hears('/quiz', (ctx) => {
+  const quizzes = [
+    { q: 'What is 2+2?', a: '4', opts: ['3', '4', '5', '6'] },
+    { q: 'Which language is used for Telegram bots?', a: 'JavaScript', opts: ['Python', 'JavaScript', 'Java', 'C++'] },
+    { q: 'What is the capital of France?', a: 'Paris', opts: ['London', 'Paris', 'Berlin', 'Rome'] }
+  ];
+  const quiz = quizzes[Math.floor(Math.random() * quizzes.length)];
+  ctx.reply(`❓ *Quiz*\n\n${quiz.q}\n\nOptions:\n${quiz.opts.map((o, i) => `${i+1}. ${o}`).join('\n')}\n\nReply with the option number!`);
+});
+
+// Handle /streak command
+bot.hears('/streak', (ctx) => {
+  const userId = ctx.from.id;
+  const stats = userStats.get(userId);
+  if (!stats) {
+    return ctx.reply('❌ No stats found! Send some messages first.');
+  }
+
+  const lastSeen = new Date(stats.lastSeen);
+  const now = new Date();
+  const diffDays = Math.floor((now - lastSeen) / (1000 * 60 * 60 * 24));
+
+  if (diffDays > 1) {
+    ctx.reply('📉 Streak broken! Keep chatting daily to build streak.');
+  } else {
+    const streakMsg = `🔥 *Your Streak*\n\nMessages today: ${stats.messages}\nLast seen: ${lastSeen.toLocaleDateString()}\n\nKeep going!`;
+    ctx.reply(streakMsg);
+  }
+});
+
 // Handle messages
 bot.on('message', (ctx) => {
   if (!ctx.message.text || ctx.message.text.startsWith('/')) return;
@@ -485,5 +689,5 @@ bot.on('polling_error', (error) => {
 });
 
 console.log(`[${BOT_NAME}] ${BOT_VERSION} - Bot is running...`);
-console.log(`[${BOT_NAME}] 25+ commands available`);
+console.log(`[${BOT_NAME}] 30+ commands available`);
 run(bot);

@@ -3,9 +3,9 @@
 [![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
 [![Telegram](https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://telegram.org/)
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg?style=for-the-badge)](https://opensource.org/licenses/ISC)
-[![Version](https://img.shields.io/badge/Version-1.2.0-brightgreen?style=for-the-badge)](https://github.com/pakyji/OXION-TELEGRAM-BOT)
+[![Version](https://img.shields.io/badge/Version-1.3.0-brightgreen?style=for-the-badge)](https://github.com/pakyji/OXION-TELEGRAM-BOT)
 
-A feature-rich multi-purpose Telegram bot built with Node.js and node-telegram-bot-api. Complete with gaming features, utilities, and 25+ commands.
+A feature-rich multi-purpose Telegram bot built with Node.js and node-telegram-bot-api. Complete with gaming features, utilities, 30+ commands, polls, reminders, and games!
 
 ## ✨ Features
 
@@ -15,6 +15,9 @@ A feature-rich multi-purpose Telegram bot built with Node.js and node-telegram-b
 - **Leaderboard** - Compete with other users
 - **Score Tracking** - Track your progress
 - **Inventory System** - Collect items
+- **Hangman Game** - Play classic hangman
+- **Word Chain** - Play word chain game
+- **Quiz** - Test your knowledge
 
 ### 🛠️ Utility Commands
 - **Calculator** - Evaluate mathematical expressions
@@ -23,6 +26,9 @@ A feature-rich multi-purpose Telegram bot built with Node.js and node-telegram-b
 - **Weather** - Simulated weather information
 - **Time & Date** - Current time and date
 - **Uptime Monitoring** - Bot status tracking
+- **Poll Creation** - Create interactive polls
+- **Reminders** - Set timed reminders
+- **Message Streak** - Track daily activity
 
 ### 🎲 Fun Commands
 - **Dice Roll** - 🎲 Roll a dice
@@ -107,6 +113,9 @@ npm run dev
 | `/quote` | Random quote |
 | `/joke` | Programmer joke |
 | `/meme` | Get a meme |
+| `/hangman` | Play hangman game |
+| `/wordchain <word>` | Play word chain |
+| `/quiz` | Take a quiz |
 
 ### Gaming Commands
 | Command | Description |
@@ -126,6 +135,9 @@ npm run dev
 | `/urldecode <text>` | URL decode |
 | `/base64encode <text>` | Base64 encode |
 | `/base64decode <text>` | Base64 decode |
+| `/poll <question> | <opt>` | Create a poll |
+| `/remind <mins> <msg>` | Set reminder |
+| `/streak` | Check message streak |
 
 ## 🛠️ Tech Stack
 
@@ -185,6 +197,16 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 - All contributors and users
 
 ## 📈 Version History
+
+### v1.3.0
+- Added JSON database persistence
+- Added poll creation feature
+- Added reminder system
+- Added hangman game
+- Added word chain game
+- Added quiz command
+- Added message streak tracking
+- Updated to 30+ commands
 
 ### v1.2.0
 - Added gaming system (score, daily, gamble, inventory, leaderboard)
