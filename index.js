@@ -357,7 +357,10 @@ bot.hears(/\/gamble (\d+)/, (ctx) => {
   const userId = ctx.from.id;
   const score = getScore(userId);
 
-  if (amount <= 0) ctx.reply('❌ Amount must be positive!'); return;
+  if (amount <= 0) {
+    ctx.reply('❌ Amount must be positive!');
+    return;
+  }
   if (amount > score) {
     ctx.reply(`❌ Insufficient points!\nYou have ${score} points but tried to gamble ${amount}.`);
     return;
@@ -512,7 +515,7 @@ bot.hears(/\/echo (.+)/, (ctx) => {
 });
 
 // Handle /broadcast command
-bot.hears(/\/broadcast (.+)/, (ctx) => {
+bot.hears(/\/broadcast (.+)/, async (ctx) => {
   const ownerId = process.env.BOT_OWNER_ID;
   if (ownerId && ctx.from.id.toString() !== ownerId) {
     return ctx.reply('❌ Unauthorized: Owner only command');
@@ -521,7 +524,7 @@ bot.hears(/\/broadcast (.+)/, (ctx) => {
   let count = 0;
   for (const [userId] of userStats) {
     try {
-      bot.sendMessage(userId, `📢 *Broadcast from ${BOT_NAME}*\n\n${message}`);
+      await ctx.api.sendMessage({ chat_id: userId, text: `📢 *Broadcast from ${BOT_NAME}*\n\n${message}`, parse_mode: 'Markdown' });
       count++;
     } catch (e) {}
   }
@@ -542,7 +545,7 @@ bot.hears(/\/poll (.+)/, (ctx) => {
   if (options.length < 2) {
     return ctx.reply('❌ Need at least 2 options!');
   }
-  bot.createPoll(question, options).then(() => {
+  ctx.api.sendPoll({ chat_id: ctx.chatId, question, options }).then(() => {
     ctx.reply('✅ Poll created successfully!');
   }).catch(e => {
     ctx.reply('❌ Failed to create poll');
@@ -568,7 +571,7 @@ bot.hears(/\/remind (\d+) (.+)/, (ctx) => {
   saveDB();
 
   setTimeout(() => {
-    bot.sendMessage(userId, `⏰ *Reminder*\n\n${message}`).catch(() => {});
+    ctx.api.sendMessage({ chat_id: userId, text: `⏰ *Reminder*\n\n${message}`, parse_mode: 'Markdown' }).catch(() => {});
     db.reminders = db.reminders.filter(r => r !== reminder);
     saveDB();
   }, minutes * 60 * 1000);
@@ -886,14 +889,10 @@ bot.hears('/2048', (ctx) => {
 });
 
 // Rock Paper Scissors Lizard Spock
-bot.hears('/rpsls', (ctx) => {
+bot.hears(/\/rpsls (\w+)/, (ctx) => {
   const choices = ['rock', 'paper', 'scissors', 'lizard', 'spock'];
   const botChoice = choices[Math.floor(Math.random() * choices.length)];
-  const userChoice = ctx.match ? ctx.match[1] : null;
-
-  if (!userChoice) {
-    return ctx.reply(`🪨 *Rock Paper Scissors Lizard Spock*\nChoices: rock, paper, scissors, lizard, spock\nUsage: /rpsls <choice>`);
-  }
+  const userChoice = ctx.match[1];
 
   const userLower = userChoice.toLowerCase();
   if (!choices.includes(userLower)) {
@@ -969,11 +968,8 @@ bot.hears(/\/answer (.+)/, (ctx) => {
 });
 
 // QR Code generator (simulated)
-bot.hears('/qr', (ctx) => {
-  const text = ctx.match ? ctx.match[1] : '';
-  if (!text) {
-    return ctx.reply('❌ Usage: /qr <text>');
-  }
+bot.hears(/\/qr (.+)/, (ctx) => {
+  const text = ctx.match[1];
   const qrCode = `QR:${Buffer.from(text).toString('base64')}`;
   ctx.reply(`🔳 *QR Code Generated*\nText: ${text}\nCode: ${qrCode}\n*Note: Simulated QR code*`);
 });
