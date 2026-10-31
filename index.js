@@ -1377,29 +1377,39 @@ bot.hears('/antispam', (ctx) => {
   ctx.reply(`🛡️ *Anti-spam*\n${db.spamSettings[chatId] ? 'Enabled' : 'Disabled'}`);
 });
 
-// ===== WHATSAPP NUMBER GENERATOR =====
+// ===== WHATSAPP NUMBER GENERATOR (Realistic Format) =====
 const whatsappCountries = {
-  'india': { code: '91', name: 'India', length: 10 },
-  'usa': { code: '1', name: 'USA', length: 10 },
-  'uk': { code: '44', name: 'UK', length: 10 },
-  'canada': { code: '1', name: 'Canada', length: 10 },
-  'australia': { code: '61', name: 'Australia', length: 9 },
-  'germany': { code: '49', name: 'Germany', length: 10 },
-  'france': { code: '33', name: 'France', length: 9 },
-  'japan': { code: '81', name: 'Japan', length: 10 },
-  'china': { code: '86', name: 'China', length: 11 },
-  'brazil': { code: '55', name: 'Brazil', length: 11 },
-  'mexico': { code: '52', name: 'Mexico', length: 10 },
-  'indonesia': { code: '62', name: 'Indonesia', length: 10 },
-  'pakistan': { code: '92', name: 'Pakistan', length: 10 },
-  'bangladesh': { code: '880', name: 'Bangladesh', length: 10 },
-  'russia': { code: '7', name: 'Russia', length: 10 },
-  'nigeria': { code: '234', name: 'Nigeria', length: 10 },
-  'egypt': { code: '20', name: 'Egypt', length: 10 },
-  'turkey': { code: '90', name: 'Turkey', length: 10 },
-  'south_africa': { code: '27', name: 'South Africa', length: 9 },
-  'saudi': { code: '966', name: 'Saudi Arabia', length: 9 }
+  'india': { code: '91', name: 'India', length: 10, mobilePrefixes: ['6', '7', '8', '9'] },
+  'usa': { code: '1', name: 'USA', length: 10, mobilePrefixes: ['2', '3', '4', '5', '6', '7', '8', '9'] },
+  'uk': { code: '44', name: 'UK', length: 10, mobilePrefixes: ['7'] },
+  'canada': { code: '1', name: 'Canada', length: 10, mobilePrefixes: ['2', '3', '4', '5', '6', '7', '8', '9'] },
+  'australia': { code: '61', name: 'Australia', length: 9, mobilePrefixes: ['4'] },
+  'germany': { code: '49', name: 'Germany', length: 10, mobilePrefixes: ['15', '16', '17'] },
+  'france': { code: '33', name: 'France', length: 9, mobilePrefixes: ['6', '7'] },
+  'japan': { code: '81', name: 'Japan', length: 10, mobilePrefixes: ['70', '80', '90'] },
+  'china': { code: '86', name: 'China', length: 11, mobilePrefixes: ['13', '14', '15', '16', '17', '18', '19'] },
+  'brazil': { code: '55', name: 'Brazil', length: 11, mobilePrefixes: ['11', '12', '13', '14', '15', '16', '17', '18', '19', '21', '22', '24', '27', '28', '31', '32', '33', '34', '35', '37', '38', '41', '42', '43', '44', '45', '46', '47', '48', '49', '51', '53', '54', '55', '61', '62', '63', '64', '65', '66', '67', '68', '69', '71', '73', '74', '75', '77', '79', '81', '82', '83', '84', '85', '86', '87', '88', '89', '91', '92', '93', '94', '95', '96', '97', '98', '99'] },
+  'mexico': { code: '52', name: 'Mexico', length: 10, mobilePrefixes: ['1', '2', '3', '4', '5', '6', '7', '8', '9'] },
+  'indonesia': { code: '62', name: 'Indonesia', length: 10, mobilePrefixes: ['8', '9'] },
+  'pakistan': { code: '92', name: 'Pakistan', length: 10, mobilePrefixes: ['3'] },
+  'bangladesh': { code: '880', name: 'Bangladesh', length: 10, mobilePrefixes: ['13', '14', '15', '16', '17', '18', '19'] },
+  'russia': { code: '7', name: 'Russia', length: 10, mobilePrefixes: ['9'] },
+  'nigeria': { code: '234', name: 'Nigeria', length: 10, mobilePrefixes: ['7', '8', '9'] },
+  'egypt': { code: '20', name: 'Egypt', length: 10, mobilePrefixes: ['10', '11', '12', '15'] },
+  'turkey': { code: '90', name: 'Turkey', length: 10, mobilePrefixes: ['5'] },
+  'south_africa': { code: '27', name: 'South Africa', length: 9, mobilePrefixes: ['6', '7', '8'] },
+  'saudi': { code: '966', name: 'Saudi Arabia', length: 9, mobilePrefixes: ['5'] }
 };
+
+function generateRealisticNumber(country) {
+  const prefix = country.mobilePrefixes[Math.floor(Math.random() * country.mobilePrefixes.length)];
+  const remainingLength = country.length - prefix.length;
+  let num = prefix;
+  for (let i = 0; i < remainingLength; i++) {
+    num += Math.floor(Math.random() * 10);
+  }
+  return '+' + country.code + ' ' + num;
+}
 
 bot.hears(/\/wanum(?: ([\w\-]+))?(?: (\d+))?/, (ctx) => {
   const countryKey = (ctx.match[1] || 'india').toLowerCase();
@@ -1413,16 +1423,12 @@ bot.hears(/\/wanum(?: ([\w\-]+))?(?: (\d+))?/, (ctx) => {
 
   const numbers = [];
   for (let i = 0; i < count; i++) {
-    let num = '';
-    for (let j = 0; j < country.length; j++) {
-      num += Math.floor(Math.random() * 10);
-    }
-    numbers.push('+' + country.code + ' ' + num);
+    numbers.push(generateRealisticNumber(country));
   }
 
   const list = numbers.map((n, i) => (i + 1) + '. ' + n + '  \n   wa.me/' + n.replace(/[+\s]/g, '')).join('\n');
 
-  ctx.reply('WhatsApp Numbers (' + country.name + ')\n\n' + list + '\n\nNote: Randomly generated. Not real numbers.');
+  ctx.reply('WhatsApp Numbers - Valid Format (' + country.name + ')\n\n' + list + '\n\nFormat: Realistic mobile prefixes + random digits\nNote: Randomly generated. Not registered numbers.');
 });
 
 bot.hears('/wanumlist', (ctx) => {
