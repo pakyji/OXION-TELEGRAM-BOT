@@ -196,7 +196,9 @@ bot.hears('/help', (ctx) => {
     `/note delete <idx> - Delete note\n` +
     `/birthday add <day> <month> <name> - Add birthday\n` +
     `/birthday list - List birthdays\n` +
-    `/birthday delete <idx> - Delete birthday\n\n` +
+    `/birthday delete <idx> - Delete birthday\n` +
+    `/wanum [country] [count] - Generate WhatsApp numbers\n` +
+    `/wanumlist - List supported countries\n\n` +
     `*Admin Commands:*\n` +
     `/broadcast <msg> - Broadcast to all users (owner only)\n` +
     `/admin - Admin panel\n` +
@@ -1373,6 +1375,59 @@ bot.hears('/antispam', (ctx) => {
   db.spamSettings[chatId] = !db.spamSettings[chatId];
   saveDB();
   ctx.reply(`🛡️ *Anti-spam*\n${db.spamSettings[chatId] ? 'Enabled' : 'Disabled'}`);
+});
+
+// ===== WHATSAPP NUMBER GENERATOR =====
+const whatsappCountries = {
+  'india': { code: '91', name: 'India', length: 10 },
+  'usa': { code: '1', name: 'USA', length: 10 },
+  'uk': { code: '44', name: 'UK', length: 10 },
+  'canada': { code: '1', name: 'Canada', length: 10 },
+  'australia': { code: '61', name: 'Australia', length: 9 },
+  'germany': { code: '49', name: 'Germany', length: 10 },
+  'france': { code: '33', name: 'France', length: 9 },
+  'japan': { code: '81', name: 'Japan', length: 10 },
+  'china': { code: '86', name: 'China', length: 11 },
+  'brazil': { code: '55', name: 'Brazil', length: 11 },
+  'mexico': { code: '52', name: 'Mexico', length: 10 },
+  'indonesia': { code: '62', name: 'Indonesia', length: 10 },
+  'pakistan': { code: '92', name: 'Pakistan', length: 10 },
+  'bangladesh': { code: '880', name: 'Bangladesh', length: 10 },
+  'russia': { code: '7', name: 'Russia', length: 10 },
+  'nigeria': { code: '234', name: 'Nigeria', length: 10 },
+  'egypt': { code: '20', name: 'Egypt', length: 10 },
+  'turkey': { code: '90', name: 'Turkey', length: 10 },
+  'south_africa': { code: '27', name: 'South Africa', length: 9 },
+  'saudi': { code: '966', name: 'Saudi Arabia', length: 9 }
+};
+
+bot.hears(/\/wanum(?: ([\w\-]+))?(?: (\d+))?/, (ctx) => {
+  const countryKey = (ctx.match[1] || 'india').toLowerCase();
+  const count = Math.min(parseInt(ctx.match[2]) || 1, 20);
+
+  const country = whatsappCountries[countryKey];
+  if (!country) {
+    const available = Object.keys(whatsappCountries).join(', ');
+    return ctx.reply('Country not found!\nAvailable: ' + available + '\n\nUsage: /wanum [country] [count]');
+  }
+
+  const numbers = [];
+  for (let i = 0; i < count; i++) {
+    let num = '';
+    for (let j = 0; j < country.length; j++) {
+      num += Math.floor(Math.random() * 10);
+    }
+    numbers.push('+' + country.code + ' ' + num);
+  }
+
+  const list = numbers.map((n, i) => (i + 1) + '. ' + n + '  \n   wa.me/' + n.replace(/[+\s]/g, '')).join('\n');
+
+  ctx.reply('WhatsApp Numbers (' + country.name + ')\n\n' + list + '\n\nNote: Randomly generated. Not real numbers.');
+});
+
+bot.hears('/wanumlist', (ctx) => {
+  const list = Object.entries(whatsappCountries).map(([key, c]) => key + ' - ' + c.name + ' (+' + c.code + ')').join('\n');
+  ctx.reply('Available Countries:\n\n' + list + '\n\nUsage: /wanum [country] [count]\nExample: /wanum india 5');
 });
 
 // Handle errors

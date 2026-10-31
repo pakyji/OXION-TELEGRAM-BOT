@@ -186,6 +186,8 @@ npm run dev
 | `/birthday add <day> <month> <name>` | Add birthday |
 | `/birthday list` | List birthdays |
 | `/birthday delete <idx>` | Delete birthday |
+| `/wanum [country] [count]` | Generate WhatsApp numbers (default: india, 1) |
+| `/wanumlist` | List supported countries |
 
 ## 🛠️ Tech Stack
 
@@ -245,6 +247,10 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 - All contributors and users
 
 ## 📈 Version History
+
+### v2.2.0
+- Added WhatsApp Number Generator (`/wanum`) with 20+ country support
+- Added `/wanumlist` to show all supported countries
 
 ### v2.1.0
 - Added Password Generator with multiple modes (alphanum, noambig, pin, words/passphrase)
