@@ -23,7 +23,9 @@ let db = {
   reminders: [],
   hangmanGames: {},
   tictactoeGames: {},
-  wordChainGames: {}
+  wordChainGames: {},
+  userNotes: {},
+  birthdays: {}
 };
 
 if (fs.existsSync(DB_FILE)) {
@@ -47,6 +49,8 @@ const saveDB = () => {
 const userStats = new Map(Object.entries(db.userStats));
 const userScores = new Map(Object.entries(db.userScores));
 const userInventory = new Map(Object.entries(db.userInventory));
+const userNotes = new Map(Object.entries(db.userNotes));
+const birthdays = new Map(Object.entries(db.birthdays));
 
 // Bot configuration
 const CONFIG = {
@@ -157,7 +161,14 @@ bot.hears('/help', (ctx) => {
     `/daily - Claim daily reward\n` +
     `/gamble <amount> - Gamble points\n` +
     `/inventory - View inventory\n` +
-    `/leaderboard - Top players\n\n` +
+    `/leaderboard - Top players\n` +
+    `/tictactoe - Play tic-tac-toe\n` +
+    `/chess - Play chess\n` +
+    `/minesweeper - Play minesweeper\n` +
+    `/2048 - Play 2048\n` +
+    `/rpsls <choice> - Rock Paper Scissors Lizard Spock\n` +
+    `/trivia - Play trivia\n` +
+    `/answer <text> - Answer trivia\n\n` +
     `*Utility Commands:*\n` +
     `/weather <city> - Weather info (simulated)\n` +
     `/calc <expression> - Calculator\n` +
@@ -167,9 +178,30 @@ bot.hears('/help', (ctx) => {
     `/base64decode <text> - Base64 decode\n` +
     `/poll <question> | <opt1> | <opt2> - Create poll\n` +
     `/remind <mins> <msg> - Set reminder\n` +
-    `/streak - Check message streak\n\n` +
+    `/streak - Check message streak\n` +
+    `/qr <text> - Generate QR code\n` +
+    `/convert <amt> <from> to <to> - Currency converter\n` +
+    `/shorten <url> - Shorten URL\n` +
+    `/summarize <text> - Summarize text\n` +
+    `/mood <text> - Analyze mood\n` +
+    `/ai <prompt> - Chat with AI\n` +
+    `/describe - Describe image\n` +
+    `/password [len] [type] - Generate password\n` +
+    `/color <hex|rgb|name|random> - Color converter\n` +
+    `/base <from> <to> <value> - Base converter\n` +
+    `/bin <num> - Quick binary conversion\n` +
+    `/hex <hex> - Quick hex conversion\n` +
+    `/note add <text> - Add note\n` +
+    `/note list - List notes\n` +
+    `/note delete <idx> - Delete note\n` +
+    `/birthday add <day> <month> <name> - Add birthday\n` +
+    `/birthday list - List birthdays\n` +
+    `/birthday delete <idx> - Delete birthday\n\n` +
     `*Admin Commands:*\n` +
-    `/broadcast <msg> - Broadcast to all users (owner only)`);
+    `/broadcast <msg> - Broadcast to all users (owner only)\n` +
+    `/admin - Admin panel\n` +
+    `/welcome - Set group welcome\n` +
+    `/antispam - Toggle anti-spam`);
 });
 
 // Handle /about command
@@ -1012,6 +1044,304 @@ bot.hears(/\/mood (.+)/, (ctx) => {
   else mood = '😐 Neutral';
 
   ctx.reply(`😊 *Mood Analysis*\nText: ${ctx.match[1]}\nMood: ${mood}\nScore: ${score}`);
+});
+
+// ===== NEW FEATURES =====
+
+// Password Generator
+bot.hears(/\/password(?: (\d+))?(?: ([\w\-]+))?/, (ctx) => {
+  const length = parseInt(ctx.match[1]) || 16;
+  const options = ctx.match[2] || 'all';
+
+  if (length < 4 || length > 128) {
+    return ctx.reply('Length must be between 4 and 128');
+  }
+
+  const charsets = {
+    lower: 'abcdefghijklmnopqrstuvwxyz',
+    upper: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+    numbers: '0123456789',
+    symbols: '!@#$%^&*()_+-=[]{}|;:,.<>?',
+    ambig: 'il1Lo0O'
+  };
+
+  let charset = charsets.lower + charsets.upper + charsets.numbers + charsets.symbols;
+
+  if (options === 'alphanum') {
+    charset = charsets.lower + charsets.upper + charsets.numbers;
+  } else if (options === 'noambig') {
+    charset = charset.split('').filter(c => !charsets.ambig.includes(c)).join('');
+  } else if (options === 'pin') {
+    charset = charsets.numbers;
+  } else if (options === 'words') {
+    const words = ['correct', 'horse', 'battery', 'staple', 'apple', 'banana', 'cherry', 'diamond', 'elephant', 'forest', 'guitar', 'hammer', 'island', 'jungle', 'kitchen', 'laptop', 'mountain', 'notebook', 'ocean', 'pencil', 'quantum', 'river', 'sunset', 'tiger', 'umbrella', 'violin', 'window', 'xylophone', 'yacht', 'zebra'];
+    const count = Math.min(length, 10);
+    const passphrase = Array.from({ length: count }, () => words[Math.floor(Math.random() * words.length)]).join('-');
+    return ctx.reply('Passphrase Generated\n\n`' + passphrase + '`\n\nLength: ' + passphrase.length + ' chars\nWords: ' + count);
+  }
+
+  let password = '';
+  for (let i = 0; i < length; i++) {
+    password += charset[Math.floor(Math.random() * charset.length)];
+  }
+
+  const entropy = Math.log2(Math.pow(charset.length, length));
+  const strength = entropy < 30 ? 'Very Weak' : entropy < 60 ? 'Weak' : entropy < 90 ? 'Fair' : entropy < 120 ? 'Strong' : 'Very Strong';
+
+  ctx.reply('Password Generated\n\n`' + password + '`\n\nLength: ' + length + '\nCharset: ' + charset.length + ' chars\nEntropy: ' + entropy.toFixed(1) + ' bits\nStrength: ' + strength + '\n\nOptions: all (default), alphanum, noambig, pin, words');
+});
+
+// Color Tools
+bot.hears(/\/color (.+)/, (ctx) => {
+  const input = ctx.match[1].trim();
+
+  // Hex to RGB
+  if (input.startsWith('#')) {
+    const hex = input.slice(1);
+    if (!/^[0-9a-fA-F]{3,8}$/.test(hex)) {
+      return ctx.reply('Invalid hex color!');
+    }
+    let r, g, b, a = 1;
+    if (hex.length === 3) {
+      r = parseInt(hex[0] + hex[0], 16);
+      g = parseInt(hex[1] + hex[1], 16);
+      b = parseInt(hex[2] + hex[2], 16);
+    } else if (hex.length === 4) {
+      r = parseInt(hex[0] + hex[0], 16);
+      g = parseInt(hex[1] + hex[1], 16);
+      b = parseInt(hex[2] + hex[2], 16);
+      a = parseInt(hex[3] + hex[3], 16) / 255;
+    } else if (hex.length === 6) {
+      r = parseInt(hex.slice(0, 2), 16);
+      g = parseInt(hex.slice(2, 4), 16);
+      b = parseInt(hex.slice(4, 6), 16);
+    } else if (hex.length === 8) {
+      r = parseInt(hex.slice(0, 2), 16);
+      g = parseInt(hex.slice(2, 4), 16);
+      b = parseInt(hex.slice(4, 6), 16);
+      a = parseInt(hex.slice(6, 8), 16) / 255;
+    }
+    const hsl = rgbToHsl(r, g, b);
+    return ctx.reply('Color Info\n\nHex: #' + hex.toUpperCase() + '\nRGB: rgb(' + r + ', ' + g + ', ' + b + ')' + (a !== 1 ? ' / rgba(' + r + ', ' + g + ', ' + b + ', ' + a + ')' : '') + '\nHSL: hsl(' + hsl.h + ', ' + hsl.s + '%, ' + hsl.l + '%)\n\nPreview: ████████');
+  }
+
+  // RGB to Hex
+  const rgbMatch = input.match(/^rgb\(?\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)?$/i);
+  if (rgbMatch) {
+    const r = parseInt(rgbMatch[1]), g = parseInt(rgbMatch[2]), b = parseInt(rgbMatch[3]);
+    if (r > 255 || g > 255 || b > 255) return ctx.reply('RGB values must be 0-255!');
+    const hex = ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+    const hsl = rgbToHsl(r, g, b);
+    return ctx.reply('Color Info\n\nRGB: rgb(' + r + ', ' + g + ', ' + b + ')\nHex: #' + hex + '\nHSL: hsl(' + hsl.h + ', ' + hsl.s + '%, ' + hsl.l + '%)\n\nPreview: ████████');
+  }
+
+  // Random color
+  if (input.toLowerCase() === 'random') {
+    const r = Math.floor(Math.random() * 256);
+    const g = Math.floor(Math.random() * 256);
+    const b = Math.floor(Math.random() * 256);
+    const hex = ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+    const hsl = rgbToHsl(r, g, b);
+    return ctx.reply('Random Color\n\nHex: #' + hex + '\nRGB: rgb(' + r + ', ' + g + ', ' + b + ')\nHSL: hsl(' + hsl.h + ', ' + hsl.s + '%, ' + hsl.l + '%)\n\nPreview: ████████');
+  }
+
+  // Named colors
+  const namedColors = {
+    red: '#FF0000', green: '#00FF00', blue: '#0000FF',
+    white: '#FFFFFF', black: '#000000', yellow: '#FFFF00',
+    cyan: '#00FFFF', magenta: '#FF00FF', orange: '#FFA500',
+    purple: '#800080', pink: '#FFC0CB', brown: '#A52A2A',
+    gray: '#808080', grey: '#808080', lime: '#00FF00',
+    navy: '#000080', teal: '#008080', olive: '#808000',
+    maroon: '#800000', silver: '#C0C0C0', gold: '#FFD700'
+  };
+
+  const lowerInput = input.toLowerCase();
+  if (namedColors[lowerInput]) {
+    const hex = namedColors[lowerInput].slice(1);
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    const hsl = rgbToHsl(r, g, b);
+    return ctx.reply(input.charAt(0).toUpperCase() + input.slice(1) + '\n\nHex: #' + hex.toUpperCase() + '\nRGB: rgb(' + r + ', ' + g + ', ' + b + ')\nHSL: hsl(' + hsl.h + ', ' + hsl.s + '%, ' + hsl.l + '%)\n\nPreview: ████████');
+  }
+
+  ctx.reply('Usage: /color #ff0000 | /color rgb(255,0,0) | /color random | /color red');
+});
+
+// RGB to HSL helper
+function rgbToHsl(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0, l = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h *= 60;
+  }
+  return { h: Math.round(h), s: Math.round(s * 100), l: Math.round(l * 100) };
+}
+
+// Base Converter
+bot.hears(/\/base (\d+) (\d+) (\w+)/, (ctx) => {
+  const fromBase = parseInt(ctx.match[1]);
+  const toBase = parseInt(ctx.match[2]);
+  const value = ctx.match[3].toUpperCase();
+
+  if (fromBase < 2 || fromBase > 36 || toBase < 2 || toBase > 36) {
+    return ctx.reply('Base must be between 2 and 36');
+  }
+
+  try {
+    const decimal = parseInt(value, fromBase);
+    if (isNaN(decimal)) {
+      return ctx.reply('Invalid number for the given base!');
+    }
+    const result = decimal.toString(toBase).toUpperCase();
+
+    const baseNames = {
+      2: 'Binary', 8: 'Octal', 10: 'Decimal', 16: 'Hexadecimal'
+    };
+
+    ctx.reply('Base Converter\n\n' + (baseNames[fromBase] || 'Base ' + fromBase) + ': ' + value + '\n' + (baseNames[toBase] || 'Base ' + toBase) + ': ' + result + '\n\nDecimal: ' + decimal);
+  } catch (e) {
+    ctx.reply('Conversion error!');
+  }
+});
+
+// Quick base conversions
+bot.hears(/\/bin (\d+)/, (ctx) => {
+  const num = parseInt(ctx.match[1]);
+  ctx.reply('Binary\n\nDecimal: ' + num + '\nBinary: ' + num.toString(2) + '\nOctal: ' + num.toString(8) + '\nHex: ' + num.toString(16).toUpperCase());
+});
+
+bot.hears(/\/hex (\w+)/, (ctx) => {
+  const num = parseInt(ctx.match[1], 16);
+  if (isNaN(num)) return ctx.reply('Invalid hex!');
+  ctx.reply('Hexadecimal\n\nHex: ' + ctx.match[1].toUpperCase() + '\nDecimal: ' + num + '\nBinary: ' + num.toString(2) + '\nOctal: ' + num.toString(8));
+});
+
+// Notes/Todo System
+bot.hears(/\/note add (.+)/, (ctx) => {
+  const userId = ctx.from.id;
+  const text = ctx.match[1];
+
+  if (!userNotes.has(userId)) userNotes.set(userId, []);
+  const notes = userNotes.get(userId);
+  notes.push({ text, created: Date.now() });
+  db.userNotes[userId] = notes;
+  saveDB();
+
+  ctx.reply('Note Added\n\n"' + text + '"\n\nTotal notes: ' + notes.length + '\nUse /note list to view');
+});
+
+bot.hears('/note list', (ctx) => {
+  const userId = ctx.from.id;
+  const notes = userNotes.get(userId) || [];
+
+  if (notes.length === 0) {
+    return ctx.reply('Your Notes\n\nEmpty! Add one with /note add <text>');
+  }
+
+  const list = notes.slice(-10).map((note, i) =>
+    (notes.length - notes.slice(-10).length + i + 1) + '. ' + note.text + ' (' + new Date(note.created).toLocaleDateString() + ')'
+  ).join('\n');
+
+  ctx.reply('Your Notes (' + notes.length + ' total)\n\n' + list + '\n\nUse /note delete <index> to remove');
+});
+
+bot.hears(/\/note delete (\d+)/, (ctx) => {
+  const userId = ctx.from.id;
+  const index = parseInt(ctx.match[1]) - 1;
+  const notes = userNotes.get(userId) || [];
+
+  if (index < 0 || index >= notes.length) {
+    return ctx.reply('Invalid note index!');
+  }
+
+  const removed = notes.splice(index, 1)[0];
+  db.userNotes[userId] = notes;
+  saveDB();
+
+  ctx.reply('Note Deleted\n\n"' + removed.text + '"\n\nRemaining: ' + notes.length);
+});
+
+bot.hears('/note', (ctx) => {
+  ctx.reply('Notes System\n\n/note add <text> - Add a note\n/note list - List your notes\n/note delete <index> - Delete a note');
+});
+
+// Birthday Tracker
+bot.hears(/\/birthday add (\d{1,2}) (\d{1,2}) (.+)/, (ctx) => {
+  const day = parseInt(ctx.match[1]);
+  const month = parseInt(ctx.match[2]);
+  const name = ctx.match[3];
+
+  if (day < 1 || day > 31 || month < 1 || month > 12) {
+    return ctx.reply('Invalid date! Day 1-31, Month 1-12');
+  }
+
+  const userId = ctx.from.id;
+  if (!birthdays.has(userId)) birthdays.set(userId, []);
+  const userBirthdays = birthdays.get(userId);
+
+  userBirthdays.push({ name, day, month, created: Date.now() });
+  db.birthdays[userId] = userBirthdays;
+  saveDB();
+
+  const today = new Date();
+  const bdayThisYear = new Date(today.getFullYear(), month - 1, day);
+  if (bdayThisYear < today) bdayThisYear.setFullYear(today.getFullYear() + 1);
+  const daysUntil = Math.ceil((bdayThisYear - today) / (1000 * 60 * 60 * 24));
+
+  ctx.reply('Birthday Added\n\n' + name + '\n' + day + '/' + month + '\n' + daysUntil + ' days until next birthday\n\nTotal: ' + userBirthdays.length);
+});
+
+bot.hears('/birthday list', (ctx) => {
+  const userId = ctx.from.id;
+  const userBirthdays = birthdays.get(userId) || [];
+
+  if (userBirthdays.length === 0) {
+    return ctx.reply('Birthdays\n\nEmpty! Add with /birthday add <day> <month> <name>');
+  }
+
+  const today = new Date();
+  const list = userBirthdays.map(b => {
+    const bdayThisYear = new Date(today.getFullYear(), b.month - 1, b.day);
+    if (bdayThisYear < today) bdayThisYear.setFullYear(today.getFullYear() + 1);
+    const daysUntil = Math.ceil((bdayThisYear - today) / (1000 * 60 * 60 * 24));
+    return b.name + ' - ' + b.day + '/' + b.month + ' (' + daysUntil + ' days)';
+  }).sort((a, b) => {
+    const daysA = parseInt(a.match(/\((\d+) days\)/)?.[1] || 999);
+    const daysB = parseInt(b.match(/\((\d+) days\)/)?.[1] || 999);
+    return daysA - daysB;
+  }).join('\n');
+
+  ctx.reply('Your Birthdays (' + userBirthdays.length + ')\n\n' + list);
+});
+
+bot.hears(/\/birthday delete (\d+)/, (ctx) => {
+  const userId = ctx.from.id;
+  const index = parseInt(ctx.match[1]) - 1;
+  const userBirthdays = birthdays.get(userId) || [];
+
+  if (index < 0 || index >= userBirthdays.length) {
+    return ctx.reply('Invalid index!');
+  }
+
+  const removed = userBirthdays.splice(index, 1)[0];
+  db.birthdays[userId] = userBirthdays;
+  saveDB();
+
+  ctx.reply('Birthday Deleted\n\n' + removed.name + ' (' + removed.day + '/' + removed.month + ')');
+});
+
+bot.hears('/birthday', (ctx) => {
+  ctx.reply('Birthday Tracker\n\n/birthday add <day> <month> <name> - Add birthday\n/birthday list - List all birthdays\n/birthday delete <index> - Delete birthday');
 });
 
 // Admin panel

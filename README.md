@@ -40,6 +40,11 @@ A feature-rich multi-purpose Telegram bot built with Node.js and node-telegram-b
 - **URL Shortener** - Shorten long URLs
 - **Text Summarization** - Summarize long messages
 - **Mood Analysis** - Analyze message sentiment
+- **Password Generator** - Secure passwords & passphrases
+- **Color Tools** - Hex/RGB/HSL conversion, named colors
+- **Base Converter** - Binary, octal, decimal, hex (2-36)
+- **Notes System** - Personal notes with CRUD
+- **Birthday Tracker** - Track birthdays with countdown
 
 ### 🎲 Fun Commands
 - **Dice Roll** - 🎲 Roll a dice
@@ -170,6 +175,17 @@ npm run dev
 | `/summarize <text>` | Summarize text |
 | `/mood <text>` | Analyze mood |
 | `/ai <prompt>` | Chat with AI |
+| `/password [len] [type]` | Generate password (types: all, alphanum, noambig, pin, words) |
+| `/color <hex|rgb|name|random>` | Color converter |
+| `/base <from> <to> <value>` | Base converter (2-36) |
+| `/bin <num>` | Quick binary conversion |
+| `/hex <hex>` | Quick hex conversion |
+| `/note add <text>` | Add note |
+| `/note list` | List notes |
+| `/note delete <idx>` | Delete note |
+| `/birthday add <day> <month> <name>` | Add birthday |
+| `/birthday list` | List birthdays |
+| `/birthday delete <idx>` | Delete birthday |
 
 ## 🛠️ Tech Stack
 
@@ -229,6 +245,15 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 - All contributors and users
 
 ## 📈 Version History
+
+### v2.1.0
+- Added Password Generator with multiple modes (alphanum, noambig, pin, words/passphrase)
+- Added Color Tools (hex/RGB/HSL conversion, named colors, random colors)
+- Added Base Converter (bases 2-36, quick /bin and /hex commands)
+- Added Notes/Todo System (add, list, delete)
+- Added Birthday Tracker (add, list with countdown, delete)
+- Updated help command with all new features
+- Updated command reference tables
 
 ### v2.0.0
 - Added Chess mini-game
