@@ -1,11 +1,10 @@
 require('dotenv').config();
-const { Bot } = require('node-telegram-bot-api');
-const { run } = require('node-telegram-bot-api/node');
+const { Telegraf } = require('telegraf');
 const fs = require('fs');
 const path = require('path');
 
 const token = process.env.TELEGRAM_BOT_TOKEN;
-const bot = new Bot(token, { polling: true });
+const bot = new Telegraf(token);
 
 // Bot information
 const BOT_NAME = 'Oxion';
@@ -545,7 +544,7 @@ bot.hears(/\/poll (.+)/, (ctx) => {
   if (options.length < 2) {
     return ctx.reply('❌ Need at least 2 options!');
   }
-  ctx.api.sendPoll({ chat_id: ctx.chatId, question, options }).then(() => {
+  ctx.api.sendPoll({ chat_id: ctx.chat.id, question, options }).then(() => {
     ctx.reply('✅ Poll created successfully!');
   }).catch(e => {
     ctx.reply('❌ Failed to create poll');
@@ -1443,4 +1442,4 @@ bot.on('polling_error', (error) => {
 
 console.log(`[${BOT_NAME}] ${BOT_VERSION} - Bot is running...`);
 console.log(`[${BOT_NAME}] 40+ commands available`);
-run(bot);
+bot.launch();
