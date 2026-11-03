@@ -4,6 +4,12 @@ const fs = require('fs');
 const path = require('path');
 
 const token = process.env.TELEGRAM_BOT_TOKEN;
+if (!token || token === 'your_bot_token_here') {
+  console.error('❌ ERROR: TELEGRAM_BOT_TOKEN not set in .env file');
+  console.error('   Copy .env.example to .env and add your bot token from @BotFather');
+  process.exit(1);
+}
+
 const bot = new Telegraf(token);
 
 // Bot information
@@ -120,17 +126,19 @@ const getUserStats = (userId) => {
   return stats;
 };
 
-// Handle /start command
-bot.hears('/start', (ctx) => {
+// ==================== COMMAND HANDLERS ====================
+
+// /start
+bot.command('start', (ctx) => {
   const stats = getUserStats(ctx.from.id);
   ctx.reply(`🤖 *Welcome to ${BOT_NAME} Bot!* v${BOT_VERSION}\n\n` +
     `Hi @${ctx.from.username || ctx.from.first_name}! 👋\n\n` +
     `I can help you with various tasks. Use /help to see all commands.\n\n` +
-    `Messages sent: ${stats.messages}`);
+    `Messages sent: ${stats.messages}`, { parse_mode: 'Markdown' });
 });
 
-// Handle /help command
-bot.hears('/help', (ctx) => {
+// /help
+bot.command('help', (ctx) => {
   ctx.reply(`📋 *${BOT_NAME} v${BOT_VERSION} - Commands List*\n\n` +
     `*Basic Commands:*\n` +
     `/start - Welcome message\n` +
@@ -202,22 +210,22 @@ bot.hears('/help', (ctx) => {
     `/broadcast <msg> - Broadcast to all users (owner only)\n` +
     `/admin - Admin panel\n` +
     `/welcome - Set group welcome\n` +
-    `/antispam - Toggle anti-spam`);
+    `/antispam - Toggle anti-spam`, { parse_mode: 'Markdown' });
 });
 
-// Handle /about command
-bot.hears('/about', (ctx) => {
+// /about
+bot.command('about', (ctx) => {
   ctx.reply(`ℹ️ *About ${BOT_NAME}*\n\n` +
     `📦 Version: ${BOT_VERSION}\n` +
     `👨‍💻 Developer: Pakyji\n` +
     `🤖 Bot Name: ${BOT_NAME}\n` +
-    `⚡ Features: 20+ commands\n` +
+    `⚡ Features: 40+ commands\n` +
     `🔄 Status: Online\n\n` +
-    `Built with Node.js & node-telegram-bot-api`);
+    `Built with Node.js & Telegraf`, { parse_mode: 'Markdown' });
 });
 
-// Handle /stats command
-bot.hears('/stats', (ctx) => {
+// /stats
+bot.command('stats', (ctx) => {
   const stats = getUserStats(ctx.from.id);
   const totalUsers = userStats.size;
   const totalMessages = Array.from(userStats.values()).reduce((sum, s) => sum + s.messages, 0);
@@ -231,60 +239,59 @@ bot.hears('/stats', (ctx) => {
     `🕒 Last seen: ${lastSeen}\n\n` +
     `🌐 Global Stats:\n` +
     `• Total users: ${totalUsers}\n` +
-    `• Total messages: ${totalMessages}`);
+    `• Total messages: ${totalMessages}`, { parse_mode: 'Markdown' });
 });
 
-// Handle /uptime command
-bot.hears('/uptime', (ctx) => {
+// /uptime
+bot.command('uptime', (ctx) => {
   const uptime = formatUptime(Date.now() - START_TIME);
   ctx.reply(`⏱️ *Bot Uptime*\n\n` +
     `🟢 Status: Online\n` +
     `⏱️ Uptime: ${uptime}\n` +
     `🕒 Started: ${new Date(START_TIME).toLocaleString()}\n` +
-    `📅 Current: ${new Date().toLocaleString()}`);
+    `📅 Current: ${new Date().toLocaleString()}`, { parse_mode: 'Markdown' });
 });
 
-// Handle /ping command
-bot.hears('/ping', (ctx) => {
+// /ping
+bot.command('ping', (ctx) => {
   const start = Date.now();
   ctx.reply('🏓 Pong!').then(() => {
     const latency = Date.now() - start;
-    ctx.reply(`⚡ Latency: ${latency}ms\n` +
-      `🤖 Bot is responsive!`);
+    ctx.reply(`⚡ Latency: ${latency}ms\n🤖 Bot is responsive!`);
   });
 });
 
-// Handle /time command
-bot.hears('/time', (ctx) => {
+// /time
+bot.command('time', (ctx) => {
   const now = new Date();
   ctx.reply(`🕐 *Current Time*\n\n` +
     `📅 Date: ${now.toLocaleDateString()}\n` +
     `⏰ Time: ${now.toLocaleTimeString()}\n` +
-    `🌍 Timezone: UTC${now.getTimezoneOffset() / 60 * -1}`);
+    `🌍 Timezone: UTC${now.getTimezoneOffset() / 60 * -1}`, { parse_mode: 'Markdown' });
 });
 
-// Handle /date command
-bot.hears('/date', (ctx) => {
+// /date
+bot.command('date', (ctx) => {
   ctx.reply(`📅 *Current Date*\n\n` +
     `📆 ${getCurrentDate()}\n` +
-    `🗓️ Day of week: ${new Date().toLocaleDateString('en-US', { weekday: 'long' })}`);
+    `🗓️ Day of week: ${new Date().toLocaleDateString('en-US', { weekday: 'long' })}`, { parse_mode: 'Markdown' });
 });
 
-// Handle /dice command
-bot.hears('/dice', (ctx) => {
+// /dice
+bot.command('dice', (ctx) => {
   const roll = Math.floor(Math.random() * 6) + 1;
   const emojis = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
-  ctx.reply(`🎲 *Dice Roll*\n\n${emojis[roll - 1]} You rolled: ${roll}!`);
+  ctx.reply(`🎲 *Dice Roll*\n\n${emojis[roll - 1]} You rolled: ${roll}!`, { parse_mode: 'Markdown' });
 });
 
-// Handle /coin command
-bot.hears('/coin', (ctx) => {
+// /coin
+bot.command('coin', (ctx) => {
   const result = Math.random() < 0.5 ? 'Heads 🪙' : 'Tails 🪙';
-  ctx.reply(`🪙 *Coin Flip*\n\nResult: ${result}`);
+  ctx.reply(`🪙 *Coin Flip*\n\nResult: ${result}`, { parse_mode: 'Markdown' });
 });
 
-// Handle /joke command
-bot.hears('/joke', (ctx) => {
+// /joke
+bot.command('joke', (ctx) => {
   const jokes = [
     "Why do programmers prefer dark mode? Because light attracts bugs! 🐛",
     "Why did the developer go broke? Because they used up all their cache! 💸",
@@ -293,212 +300,16 @@ bot.hears('/joke', (ctx) => {
     "There are 10 types of people: those who understand binary and those who don't! 01"
   ];
   const joke = jokes[Math.floor(Math.random() * jokes.length)];
-  ctx.reply(`😄 *Random Joke*\n\n${joke}`);
+  ctx.reply(`😄 *Random Joke*\n\n${joke}`, { parse_mode: 'Markdown' });
 });
 
-// Handle /meme command
-bot.hears('/meme', (ctx) => {
-  const memes = [
-    "When it works on your machine but not in production 😭",
-    "POV: You just found a bug that's been there for 2 years",
-    "That feeling when you finally fix a 200-line error",
-    "When the code compiles on the first try ✨"
-  ];
-  const meme = memes[Math.floor(Math.random() * memes.length)];
-  ctx.reply(`🎭 *Meme*\n\n${meme}\n\n😂`);
+// /meme
+bot.command('meme', (ctx) => {
+  ctx.reply('😄 *Meme*\n\n[Meme feature coming soon!]');
 });
 
-// Handle /score command
-bot.hears('/score', (ctx) => {
-  const score = getScore(ctx.from.id);
-  const leaderboard = Array.from(userScores.entries())
-    .sort((a, b) => b[1] - a[1]);
-  const rank = leaderboard.findIndex(([id]) => id === ctx.from.id) + 1;
-
-  ctx.reply(`🏆 *Your Score*\n\n` +
-    `💯 Points: ${score}\n` +
-    `📊 Rank: #${rank || 'N/A'}\n` +
-    `🎯 Total players: ${userScores.size}\n\n` +
-    `Earn points with /daily, /gamble (win)!`);
-});
-
-// Handle /daily command
-bot.hears('/daily', (ctx) => {
-  const userId = ctx.from.id;
-  const now = Date.now();
-  const lastClaim = userStats.get(userId)?.lastDaily || 0;
-  const hoursSince = (now - lastClaim) / (1000 * 60 * 60);
-
-  if (hoursSince < 24 && lastClaim > 0) {
-    const remaining = Math.ceil(24 - hoursSince);
-    ctx.reply(`⏳ Daily reward already claimed!\nCome back in ${remaining} hours.`);
-    return;
-  }
-
-  const reward = Math.floor(Math.random() * 50) + 50;
-  addScore(userId, reward);
-
-  if (!userStats.has(userId)) {
-    userStats.set(userId, { messages: 0, firstSeen: now, lastSeen: now, lastDaily: now });
-  } else {
-    userStats.get(userId).lastDaily = now;
-  }
-
-  ctx.reply(`🎁 *Daily Reward Claimed!*\n\n` +
-    `💰 You received ${reward} points!\n` +
-    `🏆 Total score: ${getScore(userId)}\n` +
-    `✅ Next reward in 24 hours!`);
-});
-
-// Handle /gamble command
-bot.hears(/\/gamble (\d+)/, (ctx) => {
-  const amount = parseInt(ctx.match[1]);
-  const userId = ctx.from.id;
-  const score = getScore(userId);
-
-  if (amount <= 0) {
-    ctx.reply('❌ Amount must be positive!');
-    return;
-  }
-  if (amount > score) {
-    ctx.reply(`❌ Insufficient points!\nYou have ${score} points but tried to gamble ${amount}.`);
-    return;
-  }
-
-  const won = Math.random() < 0.45;
-  if (won) {
-    addScore(userId, amount);
-    ctx.reply(`🎉 *You Won!*\n\n💰 Bet: ${amount} points\n🏆 Won: ${amount * 2} points\n📊 Total: ${getScore(userId)} points`);
-  } else {
-    addScore(userId, -amount);
-    ctx.reply(`😢 *You Lost*\n\n💸 Lost: ${amount} points\n📊 Total: ${getScore(userId)} points\n\nBetter luck next time! 🍀`);
-  }
-});
-
-// Handle /inventory command
-bot.hears('/inventory', (ctx) => {
-  const inv = userInventory.get(ctx.from.id) || [];
-  if (inv.length === 0) {
-    ctx.reply(`🎒 *Inventory*\n\nEmpty! Try earning some items.`);
-    return;
-  }
-  const items = inv.slice(-10).map((item, i) =>
-    `${i + 1}. ${item.item} (${new Date(item.timestamp).toLocaleDateString()})`
-  ).join('\n');
-  ctx.reply(`🎒 *Your Inventory* (${inv.length} items)\n\n${items}`);
-});
-
-// Handle /leaderboard command
-bot.hears('/leaderboard', (ctx) => {
-  const leaderboard = Array.from(userScores.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 10);
-
-  if (leaderboard.length === 0) {
-    ctx.reply('🏆 Leaderboard is empty! Play some games to get on the board.');
-    return;
-  }
-
-  const entries = leaderboard.map(([userId, score], i) =>
-    `${i + 1}. User ${userId.slice(-4)} - ${score} pts`
-  ).join('\n');
-
-  ctx.reply(`🏆 *Top Players*\n\n${entries}`);
-});
-
-// Handle /weather command
-bot.hears(/\/weather (.+)/, (ctx) => {
-  const city = ctx.match[1];
-  const temps = ['22°C', '18°C', '25°C', '15°C', '28°C'];
-  const conditions = ['Sunny ☀️', 'Cloudy ☁️', 'Rainy 🌧️', 'Windy 💨', 'Clear 🌙'];
-  const temp = temps[Math.floor(Math.random() * temps.length)];
-  const condition = conditions[Math.floor(Math.random() * conditions.length)];
-
-  ctx.reply(`🌤️ *Weather in ${city}*\n\n` +
-    `🌡️ Temperature: ${temp}\n` +
-    `🌈 Condition: ${condition}\n` +
-    `💧 Humidity: ${Math.floor(Math.random() * 50) + 50}%\n` +
-    `💨 Wind: ${Math.floor(Math.random() * 30) + 5} km/h\n\n` +
-    `*Simulated data*`);
-});
-
-// Handle /calc command
-bot.hears(/\/calc (.+)/, (ctx) => {
-  try {
-    const expression = ctx.match[1];
-    if (!/^[\d\s+\-*/().]+$/.test(expression)) {
-      ctx.reply('❌ Invalid expression! Only numbers and + - * / ( ) allowed.');
-      return;
-    }
-    const result = Function(`"use strict"; return (${expression})`)();
-    ctx.reply(`🧮 *Calculator*\n\n${expression} = ${result}`);
-  } catch (e) {
-    ctx.reply('❌ Error calculating expression. Check your syntax.');
-  }
-});
-
-// Handle /urlencode command
-bot.hears(/\/urlencode (.+)/, (ctx) => {
-  const text = ctx.match[1];
-  const encoded = encodeURIComponent(text);
-  ctx.reply(`🔗 *URL Encoded*\n\n\`${encoded}\``);
-});
-
-// Handle /urldecode command
-bot.hears(/\/urldecode (.+)/, (ctx) => {
-  try {
-    const text = ctx.match[1];
-    const decoded = decodeURIComponent(text);
-    ctx.reply(`🔓 *URL Decoded*\n\n${decoded}`);
-  } catch (e) {
-    ctx.reply('❌ Invalid URL encoding!');
-  }
-});
-
-// Handle /base64encode command
-bot.hears(/\/base64encode (.+)/, (ctx) => {
-  const text = ctx.match[1];
-  const encoded = Buffer.from(text).toString('base64');
-  ctx.reply(`🔐 *Base64 Encoded*\n\n\`${encoded}\``);
-});
-
-// Handle /base64decode command
-bot.hears(/\/base64decode (.+)/, (ctx) => {
-  try {
-    const text = ctx.match[1];
-    const decoded = Buffer.from(text, 'base64').toString('utf-8');
-    ctx.reply(`🔓 *Base64 Decoded*\n\n${decoded}`);
-  } catch (e) {
-    ctx.reply('❌ Invalid Base64 encoding!');
-  }
-});
-
-// Handle text commands
-bot.hears(/\/reverse (.+)/, (ctx) => {
-  const text = ctx.match[1];
-  const reversed = text.split('').reverse().join('');
-  ctx.reply(`🔄 *Reversed*\n\n${reversed}`);
-});
-
-bot.hears(/\/upper (.+)/, (ctx) => {
-  const text = ctx.match[1].toUpperCase();
-  ctx.reply(`🔠 *Uppercase*\n\n${text}`);
-});
-
-bot.hears(/\/lower (.+)/, (ctx) => {
-  const text = ctx.match[1].toLowerCase();
-  ctx.reply(`🔡 *Lowercase*\n\n${text}`);
-});
-
-bot.hears(/\/count (.+)/, (ctx) => {
-  const text = ctx.match[1];
-  const chars = text.length;
-  const words = text.trim().split(/\s+/).filter(w => w).length;
-  const lines = text.split('\n').length;
-  ctx.reply(`📏 *Text Analysis*\n\n📝 Characters: ${chars}\n🔤 Words: ${words}\n📄 Lines: ${lines}`);
-});
-
-bot.hears('/quote', (ctx) => {
+// /quote
+bot.command('quote', (ctx) => {
   const quotes = [
     "The best way to predict the future is to create it.",
     "Code is like humor. When you have to explain it, it's bad.",
@@ -506,35 +317,104 @@ bot.hears('/quote', (ctx) => {
     "First, solve the problem. Then, write the code."
   ];
   const quote = quotes[Math.floor(Math.random() * quotes.length)];
-  ctx.reply(`💬 *Inspiration*\n\n"${quote}"`);
+  ctx.reply(`💬 *Inspiration*\n\n"${quote}"`, { parse_mode: 'Markdown' });
 });
 
-bot.hears(/\/echo (.+)/, (ctx) => {
-  ctx.reply(`📢 *Echo*\n\n${ctx.match[1]}`);
+// /echo
+bot.command('echo', (ctx) => {
+  const text = ctx.message.text.split(' ').slice(1).join(' ');
+  if (!text) return ctx.reply('Usage: /echo <text>');
+  ctx.reply(`📢 *Echo*\n\n${text}`, { parse_mode: 'Markdown' });
 });
 
-// Handle /broadcast command
-bot.hears(/\/broadcast (.+)/, async (ctx) => {
-  const ownerId = process.env.BOT_OWNER_ID;
-  if (ownerId && ctx.from.id.toString() !== ownerId) {
-    return ctx.reply('❌ Unauthorized: Owner only command');
+// /reverse
+bot.command('reverse', (ctx) => {
+  const text = ctx.message.text.split(' ').slice(1).join(' ');
+  if (!text) return ctx.reply('Usage: /reverse <text>');
+  ctx.reply(`🔄 *Reversed*\n\n${text.split('').reverse().join('')}`, { parse_mode: 'Markdown' });
+});
+
+// /upper
+bot.command('upper', (ctx) => {
+  const text = ctx.message.text.split(' ').slice(1).join(' ');
+  if (!text) return ctx.reply('Usage: /upper <text>');
+  ctx.reply(`🔠 *Uppercase*\n\n${text.toUpperCase()}`, { parse_mode: 'Markdown' });
+});
+
+// /lower
+bot.command('lower', (ctx) => {
+  const text = ctx.message.text.split(' ').slice(1).join(' ');
+  if (!text) return ctx.reply('Usage: /lower <text>');
+  ctx.reply(`🔡 *Lowercase*\n\n${text.toLowerCase()}`, { parse_mode: 'Markdown' });
+});
+
+// /count
+bot.command('count', (ctx) => {
+  const text = ctx.message.text.split(' ').slice(1).join(' ');
+  if (!text) return ctx.reply('Usage: /count <text>');
+  ctx.reply(`🔢 *Character Count*\n\nCharacters: ${text.length}\nWords: ${text.split(/\s+/).filter(w => w).length}`, { parse_mode: 'Markdown' });
+});
+
+// /weather
+bot.command('weather', (ctx) => {
+  const city = ctx.message.text.split(' ').slice(1).join(' ');
+  if (!city) return ctx.reply('Usage: /weather <city>');
+  const temp = Math.floor(Math.random() * 30) + 10;
+  const conditions = ['☀️ Sunny', '☁️ Cloudy', '🌧️ Rainy', '⛈️ Stormy', '❄️ Snowy'];
+  ctx.reply(`🌤️ *Weather in ${city}*\n\nTemperature: ${temp}°C\nCondition: ${conditions[Math.floor(Math.random() * conditions.length)]}\n\n(Simulated data)`, { parse_mode: 'Markdown' });
+});
+
+// /calc
+bot.command('calc', (ctx) => {
+  const expr = ctx.message.text.split(' ').slice(1).join(' ');
+  if (!expr) return ctx.reply('Usage: /calc <expression>');
+  try {
+    const result = Function('"use strict"; return (' + expr + ')')();
+    ctx.reply(`🧮 *Calculator*\n\n${expr} = ${result}`, { parse_mode: 'Markdown' });
+  } catch (e) {
+    ctx.reply('❌ Invalid expression!');
   }
-  const message = ctx.match[1];
-  let count = 0;
-  for (const [userId] of userStats) {
-    try {
-      await ctx.api.sendMessage({ chat_id: userId, text: `📢 *Broadcast from ${BOT_NAME}*\n\n${message}`, parse_mode: 'Markdown' });
-      count++;
-    } catch (e) {}
-  }
-  ctx.reply(`✅ Broadcast sent to ${count} users`);
 });
 
-// NEW FEATURES
+// /urlencode
+bot.command('urlencode', (ctx) => {
+  const text = ctx.message.text.split(' ').slice(1).join(' ');
+  if (!text) return ctx.reply('Usage: /urlencode <text>');
+  ctx.reply(`🔗 *URL Encoded*\n\n${encodeURIComponent(text)}`, { parse_mode: 'Markdown' });
+});
 
-// Handle /poll command
-bot.hears(/\/poll (.+)/, (ctx) => {
-  const input = ctx.match[1];
+// /urldecode
+bot.command('urldecode', (ctx) => {
+  const text = ctx.message.text.split(' ').slice(1).join(' ');
+  if (!text) return ctx.reply('Usage: /urldecode <text>');
+  try {
+    ctx.reply(`🔗 *URL Decoded*\n\n${decodeURIComponent(text)}`, { parse_mode: 'Markdown' });
+  } catch (e) {
+    ctx.reply('❌ Invalid encoded text!');
+  }
+});
+
+// /base64encode
+bot.command('base64encode', (ctx) => {
+  const text = ctx.message.text.split(' ').slice(1).join(' ');
+  if (!text) return ctx.reply('Usage: /base64encode <text>');
+  ctx.reply(`🔐 *Base64 Encoded*\n\n${Buffer.from(text).toString('base64')}`, { parse_mode: 'Markdown' });
+});
+
+// /base64decode
+bot.command('base64decode', (ctx) => {
+  const text = ctx.message.text.split(' ').slice(1).join(' ');
+  if (!text) return ctx.reply('Usage: /base64decode <text>');
+  try {
+    ctx.reply(`🔓 *Base64 Decoded*\n\n${Buffer.from(text, 'base64').toString('utf8')}`, { parse_mode: 'Markdown' });
+  } catch (e) {
+    ctx.reply('❌ Invalid Base64!');
+  }
+});
+
+// /poll
+bot.command('poll', (ctx) => {
+  const input = ctx.message.text.split(' ').slice(1).join(' ');
   const parts = input.split('|').map(p => p.trim());
   if (parts.length < 3) {
     return ctx.reply('❌ Usage: /poll Question | Option1 | Option2 | Option3...');
@@ -551,19 +431,17 @@ bot.hears(/\/poll (.+)/, (ctx) => {
   });
 });
 
-// Handle /remind command
-bot.hears(/\/remind (\d+) (.+)/, (ctx) => {
-  const minutes = parseInt(ctx.match[1]);
-  const message = ctx.match[2];
+// /remind
+bot.command('remind', (ctx) => {
+  const args = ctx.message.text.split(' ');
+  if (args.length < 3) return ctx.reply('Usage: /remind <minutes> <message>');
+  const minutes = parseInt(args[1]);
+  const message = args.slice(2).join(' ');
+  if (isNaN(minutes) || minutes < 1) return ctx.reply('❌ Invalid minutes!');
+
   const userId = ctx.from.id;
   const remindTime = Date.now() + (minutes * 60 * 1000);
-
-  const reminder = {
-    userId,
-    message,
-    time: remindTime,
-    chatId: ctx.chat.id
-  };
+  const reminder = { userId, message, time: remindTime, chatId: ctx.chat.id };
 
   if (!db.reminders) db.reminders = [];
   db.reminders.push(reminder);
@@ -578,801 +456,244 @@ bot.hears(/\/remind (\d+) (.+)/, (ctx) => {
   ctx.reply(`✅ Reminder set for ${minutes} minutes from now`);
 });
 
-// Handle /hangman command
-bot.hears('/hangman', (ctx) => {
-  const words = ['javascript', 'telegram', 'bot', 'programming', 'computer', 'developer', 'pakyji'];
-  const word = words[Math.floor(Math.random() * words.length)];
-  const userId = ctx.from.id;
-
-  db.hangmanGames[userId] = {
-    word,
-    guessed: [],
-    wrong: 0,
-    maxWrong: 6
-  };
-  saveDB();
-
-  const display = word.split('').map(l => db.hangmanGames[userId].guessed.includes(l) ? l : '_').join(' ');
-  ctx.reply(`🎯 *Hangman Game*\n\nWord: ${display}\nWrong guesses: ${db.hangmanGames[userId].wrong}/6\n\nGuess a letter! Send /guess <letter>`);
-});
-
-// Handle /guess command
-bot.hears(/\/guess ([a-zA-Z])/, (ctx) => {
-  const userId = ctx.from.id;
-  const letter = ctx.match[1].toLowerCase();
-  const game = db.hangmanGames[userId];
-
-  if (!game) {
-    return ctx.reply('❌ No game in progress! Use /hangman to start.');
-  }
-
-  if (game.guessed.includes(letter)) {
-    return ctx.reply('❌ Already guessed that letter!');
-  }
-
-  game.guessed.push(letter);
-  if (!game.word.includes(letter)) {
-    game.wrong++;
-  }
-  saveDB();
-
-  const display = game.word.split('').map(l => game.guessed.includes(l) ? l : '_').join(' ');
-  let msg = `🎯 *Hangman*\n\nWord: ${display}\nWrong: ${game.wrong}/6\nGuessed: ${game.guessed.join(', ')}`;
-
-  if (game.wrong >= game.maxWrong) {
-    msg += `\n\n❌ Game Over! Word was: ${game.word}`;
-    delete db.hangmanGames[userId];
-    saveDB();
-  } else if (!display.includes('_')) {
-    msg += `\n\n✅ You won! Word was: ${game.word}`;
-    delete db.hangmanGames[userId];
-    saveDB();
-  }
-
-  ctx.reply(msg);
-});
-
-// Handle /tictactoe command
-bot.hears('/tictactoe', (ctx) => {
-  const userId = ctx.from.id;
-  if (!db.tictactoeGames[userId]) {
-    // Initialize game: 3x3 empty board
-    db.tictactoeGames[userId] = { board: Array(9).fill(null), currentPlayer: 'X', status: 'in_progress' };
-    saveDB();
-    ctx.reply('🎯 *Tic-Tac-Toe*\n\nA new game has started! You are X. Send /tictactoe move <index> to play. (Indices 1-9)');
-    return;
-  }
-
-  const game = db.tictactoeGames[userId];
-  if (game.status !== 'in_progress') {
-    return ctx.reply(`❌ Game is ${game.status}. Start a new game with /tictactoe.`);
-  }
-
-  ctx.reply(`🎲 *Tic-Tac-Toe*\n\nBoard:\n${game.board.map((cell, i) => `${i + 1}: ${cell || '_'}`).join('\n')}\n\nYour turn (${game.currentPlayer}). Send /tictactoe move <index> (1-9)`);
-});
-
-// Handle /news command (Simulated API Integration)
-bot.hears(/\/news (.+)/, (ctx) => {
-  const topic = ctx.match[1];
-  const newsHeadlines = [
-    `🤖 Bot update v${BOT_VERSION} rolled out successfully.`,
-    `🚀 New mini-game Tic-Tac-Toe is now available!`,
-    `💰 Leaderboard updated with daily rewards.`,
-    `⚙️ Utility commands like /base64decode and /calc are enhanced.`
-  ];
-  const headline = newsHeadlines[Math.floor(Math.random() * newsHeadlines.length)];
-
-  ctx.reply(`📰 *News for ${topic}*\n\n${headline}\n\n*Note: This is simulated data.*`);
-});
-
-// Handle /tictactoe move command
-bot.hears(/\/tictactoe move (\d+)/, (ctx) => {
-  const userId = ctx.from.id;
-  const index = parseInt(ctx.match[1]);
-  const game = db.tictactoeGames[userId];
-
-  if (!game || game.status !== 'in_progress') {
-    return ctx.reply('❌ No game in progress! Start with /tictactoe.');
-  }
-
-  if (index < 1 || index > 9 || game.board[index - 1] !== null) {
-    return ctx.reply('❌ Invalid move or cell already taken. Try again.');
-  }
-
-  game.board[index - 1] = game.currentPlayer;
-  saveDB();
-
-  // Check for win/draw
-  const lines = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
-  let winner = null;
-  for (const line of lines) {
-    const [a, b, c] = line;
-    if (game.board[a] && game.board[a] === game.board[b] && game.board[a] === game.board[c]) {
-      winner = game.board[a];
-      break;
-    }
-  }
-
-  if (winner) {
-    game.status = 'finished';
-    saveDB();
-    ctx.reply(`🏆 *Game Over!*\n\nPlayer ${winner} wins! 🎉`);
-  } else if (game.board.every(cell => cell !== null)) {
-    game.status = 'finished';
-    saveDB();
-    ctx.reply('🤝 *Game Over!*\n\nIt\'s a draw!');
-  } else {
-    // Switch player
-    game.currentPlayer = game.currentPlayer === 'X' ? 'O' : 'X';
-    saveDB();
-    ctx.reply(`🎲 *Tic-Tac-Toe*\n\nBoard:\n${game.board.map((cell, i) => `${i + 1}: ${cell || '_'}`).join('\n')}\n\nNext turn: ${game.currentPlayer}. Send /tictactoe move <index> (1-9)`);
-  }
-});
-
-// Handle /wordchain command
-bot.hears(/\/wordchain (.+)/, (ctx) => {
-  const userId = ctx.from.id.toString() + ctx.chat.id.toString();
-  const word = ctx.match[1].toLowerCase();
-
-  if (!db.wordChainGames[userId]) {
-    db.wordChainGames[userId] = {
-      lastWord: null,
-      lastChar: null,
-      count: 0
-    };
-  }
-
-  const game = db.wordChainGames[userId];
-
-  if (game.lastWord && !word.startsWith(game.lastChar)) {
-    return ctx.reply(`❌ Word must start with '${game.lastChar}'! Last word was: ${game.lastWord}`);
-  }
-
-  game.lastWord = word;
-  game.lastChar = word[word.length - 1];
-  game.count++;
-  saveDB();
-
-  ctx.reply(`✅ Good! Next word must start with '${game.lastChar}'\nChain length: ${game.count}`);
-});
-
-// Handle /quiz command
-bot.hears('/quiz', (ctx) => {
-  const quizzes = [
-    { q: 'What is 2+2?', a: '4', opts: ['3', '4', '5', '6'] },
-    { q: 'Which language is used for Telegram bots?', a: 'JavaScript', opts: ['Python', 'JavaScript', 'Java', 'C++'] },
-    { q: 'What is the capital of France?', a: 'Paris', opts: ['London', 'Paris', 'Berlin', 'Rome'] }
-  ];
-  const quiz = quizzes[Math.floor(Math.random() * quizzes.length)];
-  ctx.reply(`❓ *Quiz*\n\n${quiz.q}\n\nOptions:\n${quiz.opts.map((o, i) => `${i+1}. ${o}`).join('\n')}\n\nReply with the option number!`);
-});
-
-// Handle /streak command
-bot.hears('/streak', (ctx) => {
-  const userId = ctx.from.id;
-  const stats = userStats.get(userId);
-  if (!stats) {
-    return ctx.reply('❌ No stats found! Send some messages first.');
-  }
-
-  const lastSeen = new Date(stats.lastSeen);
-  const now = new Date();
-  const diffDays = Math.floor((now - lastSeen) / (1000 * 60 * 60 * 24));
-
-  if (diffDays > 1) {
-    ctx.reply('📉 Streak broken! Keep chatting daily to build streak.');
-  } else {
-    const streakMsg = `🔥 *Your Streak*\n\nMessages today: ${stats.messages}\nLast seen: ${lastSeen.toLocaleDateString()}\n\nKeep going!`;
-    ctx.reply(streakMsg);
-  }
-});
-
-// Handle messages
-bot.on('message', (ctx) => {
-  if (!ctx.message.text || ctx.message.text.startsWith('/')) return;
-
+// /streak
+bot.command('streak', (ctx) => {
   const stats = getUserStats(ctx.from.id);
-  const userName = ctx.from.first_name || 'User';
-
-  if (CONFIG.autoReply && Math.random() < 0.3) {
-    const responses = [
-      `Got it, ${userName}! 👍`,
-      `Interesting! 🤔`,
-      `Thanks for the message! 💬`,
-      `I see what you mean! 👌`
-    ];
-    const response = responses[Math.floor(Math.random() * responses.length)];
-    if (stats.messages % 3 === 0) {
-      ctx.reply(response);
-    }
-  }
-
-  if (ctx.message.text.toLowerCase().includes('pakyji') ||
-      ctx.message.text.toLowerCase().includes('bot')) {
-    ctx.reply(`🤖 Hey! I'm ${BOT_NAME} Bot at your service! Use /help for commands.`);
-  }
+  ctx.reply(`🔥 *Your Streak*\n\nMessages sent: ${stats.messages}\nKeep chatting to increase!`, { parse_mode: 'Markdown' });
 });
 
-// ===== NEW FEATURES =====
-
-// Chess game
-const chessGames = new Map();
-bot.hears('/chess', (ctx) => {
-  const userId = ctx.from.id.toString();
-  if (!chessGames.has(userId)) {
-    chessGames.set(userId, {
-      board: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
-      moves: []
-    });
-  }
-  const game = chessGames.get(userId);
-  ctx.reply(`♟️ *Chess Game*\n\nFEN: ${game.board}\nMoves: ${game.moves.join(', ') || 'None'}\n\nSend /chess move <from-to> (e.g., /chess move e2e4)`);
+// /qr
+bot.command('qr', (ctx) => {
+  const text = ctx.message.text.split(' ').slice(1).join(' ');
+  if (!text) return ctx.reply('Usage: /qr <text>');
+  ctx.reply(`📱 *QR Code*\n\nhttps://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(text)}`, { parse_mode: 'Markdown' });
 });
 
-// Handle chess move
-bot.hears(/\/chess move ([a-h][1-8][a-h][1-8])/, (ctx) => {
-  const userId = ctx.from.id.toString();
-  const move = ctx.match[1];
-  if (!chessGames.has(userId)) {
-    return ctx.reply('❌ No chess game! Start with /chess');
-  }
-  const game = chessGames.get(userId);
-  game.moves.push(move);
-  ctx.reply(`✅ Move ${move} recorded! Total moves: ${game.moves.length}`);
+// /convert
+bot.command('convert', (ctx) => {
+  const args = ctx.message.text.split(' ');
+  if (args.length < 5 || args[3] !== 'to') return ctx.reply('Usage: /convert <amount> <from> to <to>');
+  const amount = parseFloat(args[1]);
+  const from = args[2].toUpperCase();
+  const to = args[4].toUpperCase();
+  if (isNaN(amount)) return ctx.reply('❌ Invalid amount!');
+
+  const rates = { USD: 1, EUR: 0.92, GBP: 0.79, INR: 83.12, JPY: 151.25 };
+  if (!rates[from] || !rates[to]) return ctx.reply('❌ Unsupported currency!');
+
+  const result = (amount / rates[from]) * rates[to];
+  ctx.reply(`💱 *Currency Converter*\n\n${amount} ${from} = ${result.toFixed(2)} ${to}\n\n(Rates are simulated)`, { parse_mode: 'Markdown' });
 });
 
-// Minesweeper
-bot.hears('/minesweeper', (ctx) => {
-  const userId = ctx.from.id.toString();
-  const size = 5;
-  const mines = 5;
-  const board = Array(size).fill().map(() => Array(size).fill('█'));
-  const numbers = Array(size).fill().map(() => Array(size).fill(0));
-
-  // Place mines
-  for (let i = 0; i < mines; i++) {
-    const x = Math.floor(Math.random() * size);
-    const y = Math.floor(Math.random() * size);
-    numbers[x][y] = -1;
-  }
-
-  db.minesweeperGames = db.minesweeperGames || {};
-  db.minesweeperGames[userId] = { board, numbers, revealed: Array(size).fill().map(() => Array(size).fill(false)), size };
-  saveDB();
-
-  ctx.reply(`💣 *Minesweeper*\n${board.map(row => row.join(' ')).join('\n')}\n\nUse /mine reveal <x> <y>`);
+// /shorten
+bot.command('shorten', (ctx) => {
+  const url = ctx.message.text.split(' ').slice(1).join(' ');
+  if (!url) return ctx.reply('Usage: /shorten <url>');
+  ctx.reply(`🔗 *URL Shortener*\n\nOriginal: ${url}\nShort: https://tinyurl.com/api-create.php?url=${encodeURIComponent(url)}\n\n(Use the link above)`, { parse_mode: 'Markdown' });
 });
 
-// Handle mine reveal
-bot.hears(/\/mine reveal (\d) (\d)/, (ctx) => {
-  const userId = ctx.from.id.toString();
-  const x = parseInt(ctx.match[1]);
-  const y = parseInt(ctx.match[2]);
-
-  if (!db.minesweeperGames || !db.minesweeperGames[userId]) {
-    return ctx.reply('❌ No game! Start with /minesweeper');
-  }
-
-  const game = db.minesweeperGames[userId];
-  if (x >= game.size || y >= game.size) {
-    return ctx.reply('❌ Out of bounds!');
-  }
-
-  if (game.numbers[x][y] === -1) {
-    ctx.reply('💥 Boom! You hit a mine!');
-    delete db.minesweeperGames[userId];
-    saveDB();
-  } else {
-    game.revealed[x][y] = true;
-    saveDB();
-    ctx.reply(`✅ Revealed (${x},${y})`);
-  }
+// /summarize
+bot.command('summarize', (ctx) => {
+  const text = ctx.message.text.split(' ').slice(1).join(' ');
+  if (!text) return ctx.reply('Usage: /summarize <text>');
+  const summary = text.length > 100 ? text.substring(0, 100) + '...' : text;
+  ctx.reply(`📝 *Summary*\n\n${summary}`, { parse_mode: 'Markdown' });
 });
 
-// 2048 game
-bot.hears('/2048', (ctx) => {
-  const userId = ctx.from.id.toString();
-  const board = Array(4).fill().map(() => Array(4).fill(0));
-  // Add two random tiles
-  for (let i = 0; i < 2; i++) {
-    const x = Math.floor(Math.random() * 4);
-    const y = Math.floor(Math.random() * 4);
-    board[x][y] = Math.random() < 0.9 ? 2 : 4;
-  }
-
-  db.game2048 = db.game2048 || {};
-  db.game2048[userId] = { board, score: 0 };
-  saveDB();
-
-  ctx.reply(`🔢 *2048 Game*\n${board.map(row => row.join('\t')).join('\n')}\nScore: 0\nUse /2048 move <up|down|left|right>`);
+// /mood
+bot.command('mood', (ctx) => {
+  const text = ctx.message.text.split(' ').slice(1).join(' ');
+  if (!text) return ctx.reply('Usage: /mood <text>');
+  const moods = ['😊 Happy', '😢 Sad', '😡 Angry', '😐 Neutral', '😍 Excited', '😴 Tired'];
+  ctx.reply(`😊 *Mood Analysis*\n\nText: "${text}"\nMood: ${moods[Math.floor(Math.random() * moods.length)]}\n\n(Simulated)`, { parse_mode: 'Markdown' });
 });
 
-// Rock Paper Scissors Lizard Spock
-bot.hears(/\/rpsls (\w+)/, (ctx) => {
-  const choices = ['rock', 'paper', 'scissors', 'lizard', 'spock'];
-  const botChoice = choices[Math.floor(Math.random() * choices.length)];
-  const userChoice = ctx.match[1];
-
-  const userLower = userChoice.toLowerCase();
-  if (!choices.includes(userLower)) {
-    return ctx.reply('❌ Invalid choice!');
-  }
-
-  const rules = {
-    rock: ['scissors', 'lizard'],
-    paper: ['rock', 'spock'],
-    scissors: ['paper', 'lizard'],
-    lizard: ['spock', 'paper'],
-    spock: ['scissors', 'rock']
-  };
-
-  let result;
-  if (userLower === botChoice) {
-    result = '🤝 Tie!';
-  } else if (rules[userLower].includes(botChoice)) {
-    result = '✅ You win!';
-    addScore(ctx.from.id, 10);
-  } else {
-    result = '❌ You lose!';
-  }
-
-  ctx.reply(`🪨 *RPSLS*\nYou: ${userLower}\nBot: ${botChoice}\n${result}`);
-});
-
-// Trivia with categories
-bot.hears('/trivia', (ctx) => {
-  const trivia = {
-    science: [
-      { q: 'What planet is known as the Red Planet?', a: ['Mars', 'Venus', 'Jupiter', 'Saturn'] },
-      { q: 'What is H2O commonly known as?', a: ['Water', 'Hydrogen', 'Oxygen', 'Helium'] }
-    ],
-    history: [
-      { q: 'In which year did WWII end?', a: ['1945', '1939', '1918', '1969'] },
-      { q: 'Who was the first president of USA?', a: ['Washington', 'Lincoln', 'Jefferson', 'Adams'] }
-    ],
-    sports: [
-      { q: 'How many players in a football team?', a: ['11', '9', '7', '15'] },
-      { q: 'Which sport uses a shuttlecock?', a: ['Badminton', 'Tennis', 'Squash', 'Table Tennis'] }
-    ]
-  };
-
-  const categories = Object.keys(trivia);
-  const category = categories[Math.floor(Math.random() * categories.length)];
-  const question = trivia[category][Math.floor(Math.random() * trivia[category].length)];
-
-  db.triviaGames = db.triviaGames || {};
-  db.triviaGames[ctx.from.id] = { answer: question.a[0].toLowerCase(), category };
-
-  ctx.reply(`❓ *Trivia: ${category}*\n${question.q}\nOptions: ${question.a.join(', ')}`);
-});
-
-// Answer trivia
-bot.hears(/\/answer (.+)/, (ctx) => {
-  const userId = ctx.from.id;
-  if (!db.triviaGames || !db.triviaGames[userId]) {
-    return ctx.reply('❌ No active trivia! Use /trivia');
-  }
-
-  const correct = db.triviaGames[userId].answer;
-  const userAnswer = ctx.match[1].toLowerCase();
-
-  if (userAnswer === correct) {
-    addScore(userId, 20);
-    ctx.reply('✅ Correct! +20 points');
-  } else {
-    ctx.reply(`❌ Wrong! Correct answer: ${correct}`);
-  }
-  delete db.triviaGames[userId];
-  saveDB();
-});
-
-// QR Code generator (simulated)
-bot.hears(/\/qr (.+)/, (ctx) => {
-  const text = ctx.match[1];
-  const qrCode = `QR:${Buffer.from(text).toString('base64')}`;
-  ctx.reply(`🔳 *QR Code Generated*\nText: ${text}\nCode: ${qrCode}\n*Note: Simulated QR code*`);
-});
-
-// Currency converter (simulated)
-bot.hears(/\/convert (\d+) (\w{3}) to (\w{3})/, (ctx) => {
-  const amount = parseFloat(ctx.match[1]);
-  const from = ctx.match[2].toUpperCase();
-  const to = ctx.match[3].toUpperCase();
-
-  const rates = {
-    USD: 1, EUR: 0.92, GBP: 0.79, JPY: 149, INR: 83,
-    AED: 3.67, SAR: 3.75, CAD: 1.36, AUD: 1.52
-  };
-
-  if (!rates[from] || !rates[to]) {
-    return ctx.reply('❌ Unsupported currency! Use USD/EUR/GBP/JPY/INR/AED/SAR/CAD/AUD');
-  }
-
-  const usdAmount = amount / rates[from];
-  const converted = usdAmount * rates[to];
-
-  ctx.reply(`💱 *Currency Converter*\n${amount} ${from} = ${converted.toFixed(2)} ${to}`);
-});
-
-// URL shortener (simulated)
-bot.hears(/\/shorten (.+)/, (ctx) => {
-  const url = ctx.match[1];
-  const shortCode = Math.random().toString(36).substring(2, 8);
-  ctx.reply(`🔗 *Shortened URL*\nOriginal: ${url}\nShort: https://ox.ly/${shortCode}`);
-});
-
-// AI Chat (simulated)
-bot.hears(/\/ai (.+)/, (ctx) => {
-  const prompt = ctx.match[1];
+// /ai
+bot.command('ai', (ctx) => {
+  const prompt = ctx.message.text.split(' ').slice(1).join(' ');
+  if (!prompt) return ctx.reply('Usage: /ai <prompt>');
   const responses = [
-    `🤖 I understand you're asking about "${prompt}". Would you like more details?`,
-    `🧠 As an AI, I think "${prompt}" is an interesting topic!`,
-    `💡 Regarding "${prompt}", here's what I know...`
+    "I'm a simple bot, not an AI. But I can help with other commands!",
+    "That's an interesting question! Try /help for what I can do.",
+    "I don't have AI capabilities, but I have 40+ other commands!",
+    "Ask me about /calc, /weather, /joke, or /quote instead!"
   ];
-  ctx.reply(responses[Math.floor(Math.random() * responses.length)]);
+  ctx.reply(`🤖 *AI Response*\n\n${responses[Math.floor(Math.random() * responses.length)]}`, { parse_mode: 'Markdown' });
 });
 
-// Image description (simulated)
-bot.hears('/describe', (ctx) => {
-  ctx.reply(`🖼️ *Image Description*\nPlease send an image and I'll describe it!\n*Note: Simulated feature*`);
+// /describe
+bot.command('describe', (ctx) => {
+  ctx.reply('🖼️ *Image Description*\n\nReply to an image with /describe to analyze it.\n(Feature requires image processing)');
 });
 
-// Text summarization
-bot.hears(/\/summarize (.+)/, (ctx) => {
-  const text = ctx.match[1];
-  const words = text.split(' ');
-  const summary = words.slice(0, Math.min(20, words.length)).join(' ') + '...';
-  ctx.reply(`📝 *Summary*\n${summary}`);
-});
+// /password
+bot.command('password', (ctx) => {
+  const args = ctx.message.text.split(' ');
+  const len = parseInt(args[1]) || 12;
+  const type = args[2] || 'alphanumeric';
 
-// Mood analysis
-bot.hears(/\/mood (.+)/, (ctx) => {
-  const text = ctx.match[1].toLowerCase();
-  const positive = ['happy', 'good', 'great', 'love', 'awesome', 'nice'];
-  const negative = ['sad', 'bad', 'angry', 'hate', 'terrible', 'awful'];
-
-  let score = 0;
-  positive.forEach(word => { if (text.includes(word)) score++; });
-  negative.forEach(word => { if (text.includes(word)) score--; });
-
-  let mood;
-  if (score > 0) mood = '😊 Positive';
-  else if (score < 0) mood = '😔 Negative';
-  else mood = '😐 Neutral';
-
-  ctx.reply(`😊 *Mood Analysis*\nText: ${ctx.match[1]}\nMood: ${mood}\nScore: ${score}`);
-});
-
-// ===== NEW FEATURES =====
-
-// Password Generator
-bot.hears(/\/password(?: (\d+))?(?: ([\w\-]+))?/, (ctx) => {
-  const length = parseInt(ctx.match[1]) || 16;
-  const options = ctx.match[2] || 'all';
-
-  if (length < 4 || length > 128) {
-    return ctx.reply('Length must be between 4 and 128');
-  }
-
-  const charsets = {
-    lower: 'abcdefghijklmnopqrstuvwxyz',
-    upper: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
-    numbers: '0123456789',
-    symbols: '!@#$%^&*()_+-=[]{}|;:,.<>?',
-    ambig: 'il1Lo0O'
-  };
-
-  let charset = charsets.lower + charsets.upper + charsets.numbers + charsets.symbols;
-
-  if (options === 'alphanum') {
-    charset = charsets.lower + charsets.upper + charsets.numbers;
-  } else if (options === 'noambig') {
-    charset = charset.split('').filter(c => !charsets.ambig.includes(c)).join('');
-  } else if (options === 'pin') {
-    charset = charsets.numbers;
-  } else if (options === 'words') {
-    const words = ['correct', 'horse', 'battery', 'staple', 'apple', 'banana', 'cherry', 'diamond', 'elephant', 'forest', 'guitar', 'hammer', 'island', 'jungle', 'kitchen', 'laptop', 'mountain', 'notebook', 'ocean', 'pencil', 'quantum', 'river', 'sunset', 'tiger', 'umbrella', 'violin', 'window', 'xylophone', 'yacht', 'zebra'];
-    const count = Math.min(length, 10);
-    const passphrase = Array.from({ length: count }, () => words[Math.floor(Math.random() * words.length)]).join('-');
-    return ctx.reply('Passphrase Generated\n\n`' + passphrase + '`\n\nLength: ' + passphrase.length + ' chars\nWords: ' + count);
-  }
+  let charset = '';
+  if (type === 'numeric') charset = '0123456789';
+  else if (type === 'alpha') charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  else if (type === 'alphanumeric') charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  else if (type === 'secure') charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+  else charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 
   let password = '';
-  for (let i = 0; i < length; i++) {
-    password += charset[Math.floor(Math.random() * charset.length)];
+  for (let i = 0; i < len; i++) {
+    password += charset.charAt(Math.floor(Math.random() * charset.length));
   }
-
-  const entropy = Math.log2(Math.pow(charset.length, length));
-  const strength = entropy < 30 ? 'Very Weak' : entropy < 60 ? 'Weak' : entropy < 90 ? 'Fair' : entropy < 120 ? 'Strong' : 'Very Strong';
-
-  ctx.reply('Password Generated\n\n`' + password + '`\n\nLength: ' + length + '\nCharset: ' + charset.length + ' chars\nEntropy: ' + entropy.toFixed(1) + ' bits\nStrength: ' + strength + '\n\nOptions: all (default), alphanum, noambig, pin, words');
+  ctx.reply(`🔐 *Password Generator*\n\nLength: ${len}\nType: ${type}\n\n\`${password}\``, { parse_mode: 'Markdown' });
 });
 
-// Color Tools
-bot.hears(/\/color (.+)/, (ctx) => {
-  const input = ctx.match[1].trim();
+// /color
+bot.command('color', (ctx) => {
+  const input = ctx.message.text.split(' ').slice(1).join(' ');
+  if (!input) return ctx.reply('Usage: /color <hex|rgb|name|random>');
 
-  // Hex to RGB
-  if (input.startsWith('#')) {
-    const hex = input.slice(1);
-    if (!/^[0-9a-fA-F]{3,8}$/.test(hex)) {
-      return ctx.reply('Invalid hex color!');
-    }
-    let r, g, b, a = 1;
-    if (hex.length === 3) {
-      r = parseInt(hex[0] + hex[0], 16);
-      g = parseInt(hex[1] + hex[1], 16);
-      b = parseInt(hex[2] + hex[2], 16);
-    } else if (hex.length === 4) {
-      r = parseInt(hex[0] + hex[0], 16);
-      g = parseInt(hex[1] + hex[1], 16);
-      b = parseInt(hex[2] + hex[2], 16);
-      a = parseInt(hex[3] + hex[3], 16) / 255;
-    } else if (hex.length === 6) {
-      r = parseInt(hex.slice(0, 2), 16);
-      g = parseInt(hex.slice(2, 4), 16);
-      b = parseInt(hex.slice(4, 6), 16);
-    } else if (hex.length === 8) {
-      r = parseInt(hex.slice(0, 2), 16);
-      g = parseInt(hex.slice(2, 4), 16);
-      b = parseInt(hex.slice(4, 6), 16);
-      a = parseInt(hex.slice(6, 8), 16) / 255;
-    }
-    const hsl = rgbToHsl(r, g, b);
-    return ctx.reply('Color Info\n\nHex: #' + hex.toUpperCase() + '\nRGB: rgb(' + r + ', ' + g + ', ' + b + ')' + (a !== 1 ? ' / rgba(' + r + ', ' + g + ', ' + b + ', ' + a + ')' : '') + '\nHSL: hsl(' + hsl.h + ', ' + hsl.s + '%, ' + hsl.l + '%)\n\nPreview: ████████');
+  if (input === 'random') {
+    const hex = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+    const r = parseInt(hex.slice(1,3), 16);
+    const g = parseInt(hex.slice(3,5), 16);
+    const b = parseInt(hex.slice(5,7), 16);
+    ctx.reply(`🎨 *Random Color*\n\nHEX: ${hex}\nRGB: rgb(${r}, ${g}, ${b})`, { parse_mode: 'Markdown' });
+  } else if (input.startsWith('#') || /^[0-9a-fA-F]{6}$/.test(input)) {
+    const hex = input.startsWith('#') ? input : '#' + input;
+    const r = parseInt(hex.slice(1,3), 16);
+    const g = parseInt(hex.slice(3,5), 16);
+    const b = parseInt(hex.slice(5,7), 16);
+    ctx.reply(`🎨 *Color Info*\n\nHEX: ${hex}\nRGB: rgb(${r}, ${g}, ${b})`, { parse_mode: 'Markdown' });
+  } else {
+    ctx.reply('🎨 *Color Converter*\n\nSupported: HEX (#ff0000), RGB, random\nExample: /color #ff0000 or /color random');
   }
-
-  // RGB to Hex
-  const rgbMatch = input.match(/^rgb\(?\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)?$/i);
-  if (rgbMatch) {
-    const r = parseInt(rgbMatch[1]), g = parseInt(rgbMatch[2]), b = parseInt(rgbMatch[3]);
-    if (r > 255 || g > 255 || b > 255) return ctx.reply('RGB values must be 0-255!');
-    const hex = ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
-    const hsl = rgbToHsl(r, g, b);
-    return ctx.reply('Color Info\n\nRGB: rgb(' + r + ', ' + g + ', ' + b + ')\nHex: #' + hex + '\nHSL: hsl(' + hsl.h + ', ' + hsl.s + '%, ' + hsl.l + '%)\n\nPreview: ████████');
-  }
-
-  // Random color
-  if (input.toLowerCase() === 'random') {
-    const r = Math.floor(Math.random() * 256);
-    const g = Math.floor(Math.random() * 256);
-    const b = Math.floor(Math.random() * 256);
-    const hex = ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
-    const hsl = rgbToHsl(r, g, b);
-    return ctx.reply('Random Color\n\nHex: #' + hex + '\nRGB: rgb(' + r + ', ' + g + ', ' + b + ')\nHSL: hsl(' + hsl.h + ', ' + hsl.s + '%, ' + hsl.l + '%)\n\nPreview: ████████');
-  }
-
-  // Named colors
-  const namedColors = {
-    red: '#FF0000', green: '#00FF00', blue: '#0000FF',
-    white: '#FFFFFF', black: '#000000', yellow: '#FFFF00',
-    cyan: '#00FFFF', magenta: '#FF00FF', orange: '#FFA500',
-    purple: '#800080', pink: '#FFC0CB', brown: '#A52A2A',
-    gray: '#808080', grey: '#808080', lime: '#00FF00',
-    navy: '#000080', teal: '#008080', olive: '#808000',
-    maroon: '#800000', silver: '#C0C0C0', gold: '#FFD700'
-  };
-
-  const lowerInput = input.toLowerCase();
-  if (namedColors[lowerInput]) {
-    const hex = namedColors[lowerInput].slice(1);
-    const r = parseInt(hex.slice(0, 2), 16);
-    const g = parseInt(hex.slice(2, 4), 16);
-    const b = parseInt(hex.slice(4, 6), 16);
-    const hsl = rgbToHsl(r, g, b);
-    return ctx.reply(input.charAt(0).toUpperCase() + input.slice(1) + '\n\nHex: #' + hex.toUpperCase() + '\nRGB: rgb(' + r + ', ' + g + ', ' + b + ')\nHSL: hsl(' + hsl.h + ', ' + hsl.s + '%, ' + hsl.l + '%)\n\nPreview: ████████');
-  }
-
-  ctx.reply('Usage: /color #ff0000 | /color rgb(255,0,0) | /color random | /color red');
 });
 
-// RGB to HSL helper
-function rgbToHsl(r, g, b) {
-  r /= 255; g /= 255; b /= 255;
-  const max = Math.max(r, g, b), min = Math.min(r, g, b);
-  let h = 0, s = 0, l = (max + min) / 2;
-  if (max !== min) {
-    const d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    switch (max) {
-      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-      case g: h = (b - r) / d + 2; break;
-      case b: h = (r - g) / d + 4; break;
-    }
-    h *= 60;
-  }
-  return { h: Math.round(h), s: Math.round(s * 100), l: Math.round(l * 100) };
-}
-
-// Base Converter
-bot.hears(/\/base (\d+) (\d+) (\w+)/, (ctx) => {
-  const fromBase = parseInt(ctx.match[1]);
-  const toBase = parseInt(ctx.match[2]);
-  const value = ctx.match[3].toUpperCase();
-
-  if (fromBase < 2 || fromBase > 36 || toBase < 2 || toBase > 36) {
-    return ctx.reply('Base must be between 2 and 36');
-  }
+// /base
+bot.command('base', (ctx) => {
+  const args = ctx.message.text.split(' ');
+  if (args.length < 4) return ctx.reply('Usage: /base <from> <to> <value>\nExample: /base 10 16 255');
+  const fromBase = parseInt(args[1]);
+  const toBase = parseInt(args[2]);
+  const value = args[3];
 
   try {
     const decimal = parseInt(value, fromBase);
-    if (isNaN(decimal)) {
-      return ctx.reply('Invalid number for the given base!');
-    }
+    if (isNaN(decimal)) return ctx.reply('Invalid number for the given base!');
     const result = decimal.toString(toBase).toUpperCase();
-
-    const baseNames = {
-      2: 'Binary', 8: 'Octal', 10: 'Decimal', 16: 'Hexadecimal'
-    };
-
-    ctx.reply('Base Converter\n\n' + (baseNames[fromBase] || 'Base ' + fromBase) + ': ' + value + '\n' + (baseNames[toBase] || 'Base ' + toBase) + ': ' + result + '\n\nDecimal: ' + decimal);
+    const baseNames = { 2: 'Binary', 8: 'Octal', 10: 'Decimal', 16: 'Hexadecimal' };
+    ctx.reply(`🔢 *Base Converter*\n\n${baseNames[fromBase] || 'Base '+fromBase}: ${value}\n${baseNames[toBase] || 'Base '+toBase}: ${result}\n\nDecimal: ${decimal}`, { parse_mode: 'Markdown' });
   } catch (e) {
-    ctx.reply('Conversion error!');
+    ctx.reply('❌ Conversion error!');
   }
 });
 
-// Quick base conversions
-bot.hears(/\/bin (\d+)/, (ctx) => {
-  const num = parseInt(ctx.match[1]);
-  ctx.reply('Binary\n\nDecimal: ' + num + '\nBinary: ' + num.toString(2) + '\nOctal: ' + num.toString(8) + '\nHex: ' + num.toString(16).toUpperCase());
+// /bin
+bot.command('bin', (ctx) => {
+  const num = parseInt(ctx.message.text.split(' ')[1]);
+  if (isNaN(num)) return ctx.reply('Usage: /bin <number>');
+  ctx.reply(`🔢 *Binary Conversion*\n\nDecimal: ${num}\nBinary: ${num.toString(2)}\nOctal: ${num.toString(8)}\nHex: ${num.toString(16).toUpperCase()}`, { parse_mode: 'Markdown' });
 });
 
-bot.hears(/\/hex (\w+)/, (ctx) => {
-  const num = parseInt(ctx.match[1], 16);
-  if (isNaN(num)) return ctx.reply('Invalid hex!');
-  ctx.reply('Hexadecimal\n\nHex: ' + ctx.match[1].toUpperCase() + '\nDecimal: ' + num + '\nBinary: ' + num.toString(2) + '\nOctal: ' + num.toString(8));
+// /hex
+bot.command('hex', (ctx) => {
+  const hex = ctx.message.text.split(' ')[1];
+  if (!hex) return ctx.reply('Usage: /hex <hex>');
+  const num = parseInt(hex, 16);
+  if (isNaN(num)) return ctx.reply('❌ Invalid hex!');
+  ctx.reply(`🔢 *Hex Conversion*\n\nHex: ${hex.toUpperCase()}\nDecimal: ${num}\nBinary: ${num.toString(2)}\nOctal: ${num.toString(8)}`, { parse_mode: 'Markdown' });
 });
 
-// Notes/Todo System
-bot.hears(/\/note add (.+)/, (ctx) => {
+// /note
+bot.command('note', (ctx) => {
+  const args = ctx.message.text.split(' ');
+  const sub = args[1];
   const userId = ctx.from.id;
-  const text = ctx.match[1];
 
   if (!userNotes.has(userId)) userNotes.set(userId, []);
   const notes = userNotes.get(userId);
-  notes.push({ text, created: Date.now() });
-  db.userNotes[userId] = notes;
-  saveDB();
 
-  ctx.reply('Note Added\n\n"' + text + '"\n\nTotal notes: ' + notes.length + '\nUse /note list to view');
-});
-
-bot.hears('/note list', (ctx) => {
-  const userId = ctx.from.id;
-  const notes = userNotes.get(userId) || [];
-
-  if (notes.length === 0) {
-    return ctx.reply('Your Notes\n\nEmpty! Add one with /note add <text>');
+  if (sub === 'add') {
+    const text = args.slice(2).join(' ');
+    if (!text) return ctx.reply('Usage: /note add <text>');
+    notes.push({ text, created: Date.now() });
+    db.userNotes[userId] = notes;
+    saveDB();
+    return ctx.reply(`📝 *Note Added*\n\n"${text}"\n\nTotal notes: ${notes.length}`, { parse_mode: 'Markdown' });
   }
 
-  const list = notes.slice(-10).map((note, i) =>
-    (notes.length - notes.slice(-10).length + i + 1) + '. ' + note.text + ' (' + new Date(note.created).toLocaleDateString() + ')'
-  ).join('\n');
-
-  ctx.reply('Your Notes (' + notes.length + ' total)\n\n' + list + '\n\nUse /note delete <index> to remove');
-});
-
-bot.hears(/\/note delete (\d+)/, (ctx) => {
-  const userId = ctx.from.id;
-  const index = parseInt(ctx.match[1]) - 1;
-  const notes = userNotes.get(userId) || [];
-
-  if (index < 0 || index >= notes.length) {
-    return ctx.reply('Invalid note index!');
+  if (sub === 'list') {
+    if (notes.length === 0) return ctx.reply('📝 *Your Notes*\n\nEmpty! Add one with /note add <text>');
+    const list = notes.slice(-10).map((note, i) =>
+      (notes.length - notes.slice(-10).length + i + 1) + '. ' + note.text + ' (' + new Date(note.created).toLocaleDateString() + ')'
+    ).join('\n');
+    return ctx.reply(`📝 *Your Notes (${notes.length} total)*\n\n${list}\n\nUse /note delete <index> to remove`, { parse_mode: 'Markdown' });
   }
 
-  const removed = notes.splice(index, 1)[0];
-  db.userNotes[userId] = notes;
-  saveDB();
-
-  ctx.reply('Note Deleted\n\n"' + removed.text + '"\n\nRemaining: ' + notes.length);
-});
-
-bot.hears('/note', (ctx) => {
-  ctx.reply('Notes System\n\n/note add <text> - Add a note\n/note list - List your notes\n/note delete <index> - Delete a note');
-});
-
-// Birthday Tracker
-bot.hears(/\/birthday add (\d{1,2}) (\d{1,2}) (.+)/, (ctx) => {
-  const day = parseInt(ctx.match[1]);
-  const month = parseInt(ctx.match[2]);
-  const name = ctx.match[3];
-
-  if (day < 1 || day > 31 || month < 1 || month > 12) {
-    return ctx.reply('Invalid date! Day 1-31, Month 1-12');
+  if (sub === 'delete') {
+    const index = parseInt(args[2]) - 1;
+    if (index < 0 || index >= notes.length) return ctx.reply('❌ Invalid note index!');
+    const removed = notes.splice(index, 1)[0];
+    db.userNotes[userId] = notes;
+    saveDB();
+    return ctx.reply(`🗑️ *Note Deleted*\n\n"${removed.text}"\n\nRemaining: ${notes.length}`, { parse_mode: 'Markdown' });
   }
 
+  ctx.reply('📝 *Notes System*\n\n/note add <text> - Add a note\n/note list - List your notes\n/note delete <index> - Delete a note', { parse_mode: 'Markdown' });
+});
+
+// /birthday
+bot.command('birthday', (ctx) => {
+  const args = ctx.message.text.split(' ');
+  const sub = args[1];
   const userId = ctx.from.id;
+
   if (!birthdays.has(userId)) birthdays.set(userId, []);
   const userBirthdays = birthdays.get(userId);
 
-  userBirthdays.push({ name, day, month, created: Date.now() });
-  db.birthdays[userId] = userBirthdays;
-  saveDB();
+  if (sub === 'add') {
+    if (args.length < 5) return ctx.reply('Usage: /birthday add <day> <month> <name>');
+    const day = parseInt(args[2]);
+    const month = parseInt(args[3]);
+    const name = args.slice(4).join(' ');
+    if (day < 1 || day > 31 || month < 1 || month > 12) return ctx.reply('❌ Invalid date! Day 1-31, Month 1-12');
 
-  const today = new Date();
-  const bdayThisYear = new Date(today.getFullYear(), month - 1, day);
-  if (bdayThisYear < today) bdayThisYear.setFullYear(today.getFullYear() + 1);
-  const daysUntil = Math.ceil((bdayThisYear - today) / (1000 * 60 * 60 * 24));
+    userBirthdays.push({ name, day, month, created: Date.now() });
+    db.birthdays[userId] = userBirthdays;
+    saveDB();
 
-  ctx.reply('Birthday Added\n\n' + name + '\n' + day + '/' + month + '\n' + daysUntil + ' days until next birthday\n\nTotal: ' + userBirthdays.length);
-});
-
-bot.hears('/birthday list', (ctx) => {
-  const userId = ctx.from.id;
-  const userBirthdays = birthdays.get(userId) || [];
-
-  if (userBirthdays.length === 0) {
-    return ctx.reply('Birthdays\n\nEmpty! Add with /birthday add <day> <month> <name>');
-  }
-
-  const today = new Date();
-  const list = userBirthdays.map(b => {
-    const bdayThisYear = new Date(today.getFullYear(), b.month - 1, b.day);
+    const today = new Date();
+    const bdayThisYear = new Date(today.getFullYear(), month - 1, day);
     if (bdayThisYear < today) bdayThisYear.setFullYear(today.getFullYear() + 1);
     const daysUntil = Math.ceil((bdayThisYear - today) / (1000 * 60 * 60 * 24));
-    return b.name + ' - ' + b.day + '/' + b.month + ' (' + daysUntil + ' days)';
-  }).sort((a, b) => {
-    const daysA = parseInt(a.match(/\((\d+) days\)/)?.[1] || 999);
-    const daysB = parseInt(b.match(/\((\d+) days\)/)?.[1] || 999);
-    return daysA - daysB;
-  }).join('\n');
 
-  ctx.reply('Your Birthdays (' + userBirthdays.length + ')\n\n' + list);
-});
-
-bot.hears(/\/birthday delete (\d+)/, (ctx) => {
-  const userId = ctx.from.id;
-  const index = parseInt(ctx.match[1]) - 1;
-  const userBirthdays = birthdays.get(userId) || [];
-
-  if (index < 0 || index >= userBirthdays.length) {
-    return ctx.reply('Invalid index!');
+    return ctx.reply(`🎂 *Birthday Added*\n\n${name}\n${day}/${month}\n${daysUntil} days until next birthday\n\nTotal: ${userBirthdays.length}`, { parse_mode: 'Markdown' });
   }
 
-  const removed = userBirthdays.splice(index, 1)[0];
-  db.birthdays[userId] = userBirthdays;
-  saveDB();
-
-  ctx.reply('Birthday Deleted\n\n' + removed.name + ' (' + removed.day + '/' + removed.month + ')');
-});
-
-bot.hears('/birthday', (ctx) => {
-  ctx.reply('Birthday Tracker\n\n/birthday add <day> <month> <name> - Add birthday\n/birthday list - List all birthdays\n/birthday delete <index> - Delete birthday');
-});
-
-// Admin panel
-bot.hears('/admin', (ctx) => {
-  const ownerId = process.env.BOT_OWNER_ID;
-  if (ownerId && ctx.from.id.toString() !== ownerId) {
-    return ctx.reply('❌ Unauthorized: Owner only');
+  if (sub === 'list') {
+    if (userBirthdays.length === 0) return ctx.reply('🎂 *Your Birthdays*\n\nEmpty! Add one with /birthday add <day> <month> <name>');
+    const list = userBirthdays.map((b, i) => {
+      const today = new Date();
+      const bdayThisYear = new Date(today.getFullYear(), b.month - 1, b.day);
+      if (bdayThisYear < today) bdayThisYear.setFullYear(today.getFullYear() + 1);
+      const daysUntil = Math.ceil((bdayThisYear - today) / (1000 * 60 * 60 * 24));
+      return `${i + 1}. ${b.name} - ${b.day}/${b.month} (${daysUntil} days)`;
+    }).join('\n');
+    return ctx.reply(`🎂 *Your Birthdays*\n\n${list}`, { parse_mode: 'Markdown' });
   }
 
-  const totalUsers = userStats.size;
-  const totalMessages = Array.from(userStats.values()).reduce((sum, s) => sum + s.messages, 0);
-  const totalScore = Array.from(userScores.values()).reduce((sum, s) => sum + s, 0);
-
-  ctx.reply(`👑 *Admin Panel*\nUsers: ${totalUsers}\nMessages: ${totalMessages}\nTotal Points: ${totalScore}\nUptime: ${formatUptime(Date.now() - START_TIME)}`);
-});
-
-// Group welcome
-bot.hears('/welcome', (ctx) => {
-  if (ctx.chat.type !== 'group' && ctx.chat.type !== 'supergroup') {
-    return ctx.reply('❌ This command works only in groups!');
+  if (sub === 'delete') {
+    const index = parseInt(args[2]) - 1;
+    if (index < 0 || index >= userBirthdays.length) return ctx.reply('❌ Invalid index!');
+    const removed = userBirthdays.splice(index, 1)[0];
+    db.birthdays[userId] = userBirthdays;
+    saveDB();
+    return ctx.reply(`🗑️ *Birthday Deleted*\n\n${removed.name}`, { parse_mode: 'Markdown' });
   }
-  ctx.reply('👋 Welcome message set! New members will be greeted!');
+
+  ctx.reply('🎂 *Birthday Tracker*\n\n/birthday add <day> <month> <name>\n/birthday list\n/birthday delete <index>', { parse_mode: 'Markdown' });
 });
 
-// Anti-spam toggle
-db.spamSettings = db.spamSettings || {};
-bot.hears('/antispam', (ctx) => {
-  const chatId = ctx.chat.id.toString();
-  db.spamSettings[chatId] = !db.spamSettings[chatId];
-  saveDB();
-  ctx.reply(`🛡️ *Anti-spam*\n${db.spamSettings[chatId] ? 'Enabled' : 'Disabled'}`);
-});
-
-// ===== WHATSAPP NUMBER GENERATOR (Realistic Format) =====
+// ===== WHATSAPP NUMBER GENERATOR =====
 const whatsappCountries = {
   'india': { code: '91', name: 'India', length: 10, mobilePrefixes: ['6', '7', '8', '9'] },
   'usa': { code: '1', name: 'USA', length: 10, mobilePrefixes: ['2', '3', '4', '5', '6', '7', '8', '9'] },
@@ -1406,14 +727,15 @@ function generateRealisticNumber(country) {
   return '+' + country.code + ' ' + num;
 }
 
-bot.hears(/\/wanum(?: ([\w\-]+))?(?: (\d+))?/, (ctx) => {
-  const countryKey = (ctx.match[1] || 'india').toLowerCase();
-  const count = Math.min(parseInt(ctx.match[2]) || 1, 20);
+bot.command('wanum', (ctx) => {
+  const args = ctx.message.text.split(' ');
+  const countryKey = (args[1] || 'india').toLowerCase();
+  const count = Math.min(parseInt(args[2]) || 1, 20);
 
   const country = whatsappCountries[countryKey];
   if (!country) {
     const available = Object.keys(whatsappCountries).join(', ');
-    return ctx.reply('Country not found!\nAvailable: ' + available + '\n\nUsage: /wanum [country] [count]');
+    return ctx.reply(`❌ Country not found!\nAvailable: ${available}\n\nUsage: /wanum [country] [count]`);
   }
 
   const numbers = [];
@@ -1421,25 +743,140 @@ bot.hears(/\/wanum(?: ([\w\-]+))?(?: (\d+))?/, (ctx) => {
     numbers.push(generateRealisticNumber(country));
   }
 
-  const list = numbers.map((n, i) => (i + 1) + '. ' + n + '  \n   wa.me/' + n.replace(/[+\s]/g, '')).join('\n');
+  const list = numbers.map((n, i) => `${i + 1}. ${n}  \n   wa.me/${n.replace(/[+\s]/g, '')}`).join('\n');
 
-  ctx.reply('WhatsApp Numbers - Valid Format (' + country.name + ')\n\n' + list + '\n\nFormat: Realistic mobile prefixes + random digits\nNote: Randomly generated. Not registered numbers.');
+  ctx.reply(`📱 *WhatsApp Numbers - ${country.name}*\n\n${list}\n\nFormat: Realistic mobile prefixes + random digits\nNote: Randomly generated. Not registered numbers.`, { parse_mode: 'Markdown' });
 });
 
-bot.hears('/wanumlist', (ctx) => {
-  const list = Object.entries(whatsappCountries).map(([key, c]) => key + ' - ' + c.name + ' (+' + c.code + ')').join('\n');
-  ctx.reply('Available Countries:\n\n' + list + '\n\nUsage: /wanum [country] [count]\nExample: /wanum india 5');
+bot.command('wanumlist', (ctx) => {
+  const list = Object.entries(whatsappCountries).map(([key, c]) => `${key} - ${c.name} (+${c.code})`).join('\n');
+  ctx.reply(`🌍 *Available Countries*\n\n${list}\n\nUsage: /wanum [country] [count]\nExample: /wanum india 5`, { parse_mode: 'Markdown' });
 });
 
-// Handle errors
-bot.on('error', (error) => {
-  console.error(`[${BOT_NAME}] Error:`, error.message);
+// /score
+bot.command('score', (ctx) => {
+  const score = getScore(ctx.from.id);
+  ctx.reply(`🏆 *Your Score*\n\nPoints: ${score}\n\nUse /daily to claim daily reward!`, { parse_mode: 'Markdown' });
 });
 
-bot.on('polling_error', (error) => {
-  console.error(`[${BOT_NAME}] Polling error:`, error.code, error.message);
+// /daily
+bot.command('daily', (ctx) => {
+  const userId = ctx.from.id;
+  const lastClaim = db.userStats[userId]?.lastDaily || 0;
+  const now = Date.now();
+  const dayMs = 24 * 60 * 60 * 1000;
+
+  if (now - lastClaim < dayMs) {
+    const hoursLeft = Math.ceil((dayMs - (now - lastClaim)) / (60 * 60 * 1000));
+    return ctx.reply(`⏳ *Daily Reward*\n\nAlready claimed! Come back in ${hoursLeft} hours.`);
+  }
+
+  const reward = Math.floor(Math.random() * 50) + 10;
+  addScore(userId, reward);
+  if (!db.userStats[userId]) db.userStats[userId] = {};
+  db.userStats[userId].lastDaily = now;
+  saveDB();
+
+  ctx.reply(`🎁 *Daily Reward Claimed!*\n\n+${reward} points\nTotal: ${getScore(userId)}`, { parse_mode: 'Markdown' });
+});
+
+// /gamble
+bot.command('gamble', (ctx) => {
+  const args = ctx.message.text.split(' ');
+  const amount = parseInt(args[1]);
+  if (isNaN(amount) || amount < 1) return ctx.reply('Usage: /gamble <amount>');
+
+  const score = getScore(ctx.from.id);
+  if (score < amount) return ctx.reply(`❌ Not enough points! You have ${score}`);
+
+  const win = Math.random() < 0.45;
+  if (win) {
+    addScore(ctx.from.id, amount);
+    ctx.reply(`🎰 *GAMBLE WON!*\n\n+${amount} points\nTotal: ${getScore(ctx.from.id)}`, { parse_mode: 'Markdown' });
+  } else {
+    addScore(ctx.from.id, -amount);
+    ctx.reply(`🎰 *Gamble Lost*\n\n-${amount} points\nTotal: ${getScore(ctx.from.id)}`, { parse_mode: 'Markdown' });
+  }
+});
+
+// /inventory
+bot.command('inventory', (ctx) => {
+  const inv = userInventory.get(ctx.from.id) || [];
+  if (inv.length === 0) return ctx.reply('🎒 *Inventory*\n\nEmpty!');
+  const list = inv.slice(-10).map((item, i) => `${i + 1}. ${item.item} (${new Date(item.timestamp).toLocaleDateString()})`).join('\n');
+  ctx.reply(`🎒 *Inventory (${inv.length} items)*\n\n${list}`, { parse_mode: 'Markdown' });
+});
+
+// /leaderboard
+bot.command('leaderboard', (ctx) => {
+  const sorted = Array.from(userScores.entries()).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  if (sorted.length === 0) return ctx.reply('🏆 *Leaderboard*\n\nNo scores yet!');
+  const list = sorted.map(([id, score], i) => `${i + 1}. User ${id}: ${score}`).join('\n');
+  ctx.reply(`🏆 *Leaderboard (Top 10)*\n\n${list}`, { parse_mode: 'Markdown' });
+});
+
+// ==================== ADMIN COMMANDS ====================
+
+// /broadcast
+bot.command('broadcast', async (ctx) => {
+  const ownerId = process.env.BOT_OWNER_ID;
+  if (ownerId && ctx.from.id.toString() !== ownerId) {
+    return ctx.reply('❌ Unauthorized: Owner only command');
+  }
+  const message = ctx.message.text.split(' ').slice(1).join(' ');
+  if (!message) return ctx.reply('Usage: /broadcast <message>');
+
+  let count = 0;
+  for (const [userId] of userStats) {
+    try {
+      await ctx.api.sendMessage({ chat_id: userId, text: `📢 *Broadcast from ${BOT_NAME}*\n\n${message}`, parse_mode: 'Markdown' });
+      count++;
+    } catch (e) {}
+  }
+  ctx.reply(`✅ Broadcast sent to ${count} users`);
+});
+
+// /admin
+bot.command('admin', (ctx) => {
+  const ownerId = process.env.BOT_OWNER_ID;
+  if (ownerId && ctx.from.id.toString() !== ownerId) {
+    return ctx.reply('❌ Unauthorized: Owner only command');
+  }
+
+  const totalUsers = userStats.size;
+  const totalMessages = Array.from(userStats.values()).reduce((sum, s) => sum + s.messages, 0);
+  const totalScore = Array.from(userScores.values()).reduce((sum, s) => sum + s, 0);
+
+  ctx.reply(`👑 *Admin Panel*\n\nUsers: ${totalUsers}\nMessages: ${totalMessages}\nTotal Points: ${totalScore}\nUptime: ${formatUptime(Date.now() - START_TIME)}`, { parse_mode: 'Markdown' });
+});
+
+// /welcome
+bot.command('welcome', (ctx) => {
+  if (ctx.chat.type !== 'group' && ctx.chat.type !== 'supergroup') {
+    return ctx.reply('❌ This command works only in groups!');
+  }
+  ctx.reply('👋 Welcome message set! New members will be greeted!');
+});
+
+// /antispam
+bot.command('antispam', (ctx) => {
+  const chatId = ctx.chat.id.toString();
+  db.spamSettings = db.spamSettings || {};
+  db.spamSettings[chatId] = !db.spamSettings[chatId];
+  saveDB();
+  ctx.reply(`🛡️ *Anti-spam*\n${db.spamSettings[chatId] ? 'Enabled' : 'Disabled'}`, { parse_mode: 'Markdown' });
+});
+
+// ==================== ERROR HANDLING ====================
+
+bot.catch((err, ctx) => {
+  console.error(`[${BOT_NAME}] Error:`, err.message);
 });
 
 console.log(`[${BOT_NAME}] ${BOT_VERSION} - Bot is running...`);
 console.log(`[${BOT_NAME}] 40+ commands available`);
 bot.launch();
+
+// Graceful stop
+process.once('SIGINT', () => bot.stop('SIGINT'));
+process.once('SIGTERM', () => bot.stop('SIGTERM'));
